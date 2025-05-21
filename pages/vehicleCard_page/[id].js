@@ -25,6 +25,7 @@ import "chart.js/auto";
 import { onAuthStateChanged } from "firebase/auth";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Share2 } from "lucide-react";
 import {
   Car,
   MapPin,
@@ -172,7 +173,6 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
   const [files, setFiles] = useState([]);
   const [existing] = useState(initialData?.urls || []);
   const [uploading, setUploading] = useState(false);
-
   const handleSubmit = async () => {
     if (!title || !date || !category || !price) {
       return toast.error("All fields are required");
@@ -206,9 +206,21 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
         { merge: true }
       );
 
+      // --- Update vehicle mileage if needed ---
+    const vehicleRef = doc(db, "listing", vehicleId);
+    const vehicleSnap = await getDoc(vehicleRef);
+    if (vehicleSnap.exists()) {
+      const vehicleData = vehicleSnap.data();
+      const currentMileage = Number(vehicleData.mileage) || 0;
+      const newMileage = isNaN(+mileage) ? currentMileage : Number(mileage);
+      if (newMileage > currentMileage) {
+        await setDoc(vehicleRef, { mileage: newMileage }, { merge: true });
+      }
+    }
+
       // Call the aiEstimator API
-      const vehicleSnap = await getDoc(doc(db, "listing", vehicleId));
-      if (vehicleSnap.exists()) {
+      const vehicleSnap2 = await getDoc(doc(db, "listing", vehicleId));
+      if (vehicleSnap2.exists()) {
         const vehicleData = vehicleSnap.data();
         const response = await fetch("/api/aiEstimator", {
           method: "POST",
@@ -321,6 +333,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
 // Composant principal
 export default function VehicleCardPage() {
   const router = useRouter();
+  const [showInfo, setShowInfo] = useState(false);
   const { id } = router.query;
 
   // Hooks dans un ordre fixe
@@ -338,7 +351,7 @@ export default function VehicleCardPage() {
   const [showReceiptForm, setShowReceiptForm] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState(null);
   const [allDocs, setAllDocs] = useState([]);
-  const [selectedItem, setSelectedItem] = useState(null);
+  const [selectedItem, setSelectedItem] = useState("Total Spent");
   // Added state for enlarged image index
   const [enlargedIdx, setEnlargedIdx] = useState(null);
   // Add state definition for marketplace modal:
@@ -375,6 +388,45 @@ export default function VehicleCardPage() {
   const [selectedReceiptUrls, setSelectedReceiptUrls] = useState([]); // Updated state
   const [receiptToDelete, setReceiptToDelete] = useState(null);
   const [selectedAdminDocUrl, setSelectedAdminDocUrl] = useState(null); // New state for admin document modal
+
+  // ...inside VehicleCardPage component...
+const handleShare = async () => {
+  try {
+    // Fetch the current user's firstName from Firebase
+    const userRef = doc(db, 'members', auth.currentUser.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      console.error('User data not found.');
+      return;
+    }
+
+    const { firstName } = userSnap.data();
+
+    // Prepare the share data
+    const shareData = {
+      title: `${firstName} invites you to check this ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
+      url: window.location.href,
+    };
+
+    // Use the Web Share API if available
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        console.log('Page shared successfully');
+      } catch (error) {
+        console.error('Error sharing the page:', error);
+      }
+    } else {
+      // Fallback for browsers that don't support the Web Share API
+      navigator.clipboard.writeText(shareData.url).then(() => {
+        alert('Link copied to clipboard!');
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching user data for sharing:', error);
+  }
+};
 
   useEffect(() => setLogLevel("debug"), []);
   useEffect(() => {
@@ -1113,10 +1165,18 @@ export default function VehicleCardPage() {
       <ToastContainer />
       <div className="container px-4 py-10 mx-auto text-white md:pt-28 bg-zinc-900">
         {/* Header */}
-        <header className="mb-8 text-center">
+        <header className="mb-8 text-center flex items-center justify-center gap-2">
           <h1 className="text-4xl font-bold">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h1>
+          <button
+            onClick={handleShare}
+            className="ml-3 p-2 rounded-full bg-blue-700 hover:bg-blue-800 transition"
+            title="Share this vehicle"
+            type="button"
+          >
+            <Share2 className="w-6 h-6 text-white" />
+          </button>
         </header>
         {/* Gallery + Vehicle Info Section */}
         <div className="grid gap-8 md:grid-cols-2">
@@ -1137,9 +1197,20 @@ export default function VehicleCardPage() {
               </div>
             ))}
           </div>
+          
+
+          <div className="flex items-center justify-between md:hidden mb-2">
+            <h2 className="text-2xl font-bold">Vehicle Info</h2>
+            <button
+              onClick={() => setShowInfo((v) => !v)}
+              className="px-3 py-1 text-sm bg-blue-600 rounded text-white"
+            >
+              {showInfo ? "Hide" : "Show"}
+            </button>
+          </div>
 
           {/* Vehicle Info & Actions Card */}
-          <div className="hidden p-6 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700 md:block">
+          <div className={`p-6 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700 ${showInfo ? "" : "hidden"} md:block`}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Vehicle Info</h2>
               {user.uid === vehicle.uid && (
@@ -1493,67 +1564,80 @@ export default function VehicleCardPage() {
                 <h3 className="mb-2 text-xl font-semibold text-white">
                   Receipts
                 </h3>
-                {receipts.length ? (
-                  <div className="space-y-2">
-                    {receipts.map((r) => (
-                      <div
-                        key={r.id}
-                        className="flex items-center justify-between"
-                      >
-                        <div className="flex flex-col">
-                          <div className="flex items-center">
+                <div className="max-h-[30vh] overflow-y-auto">
+                  {receipts.length ? (
+                    <div className="space-y-2">
+                      {receipts.map((r) => (
+                        <div
+                          key={r.id}
+                          className="flex items-center justify-between"
+                        >
+                          <div className="flex flex-col">
+                            <div className="flex items-center">
+                              <button
+                                onClick={() => {
+                                  if (r.urls && r.urls.length > 0) {
+                                    setSelectedReceiptUrls(r.urls);
+                                  }
+                                }}
+                                className="text-left text-blue-400 hover:underline"
+                              >
+                                {/* Format the date as YYYY-MM-DD */}
+                                {r.date
+                                  ? `${new Date(
+                                      r.date.seconds ? r.date.seconds * 1000 : r.date
+                                    ).toISOString().split("T")[0]} - `
+                                  : ""}
+                                {r.title}
+                              </button>
+                              <span className="ml-2 text-neutral-400">
+                                - ${r.price.toFixed(2)}
+                              </span>
+                            </div>
+                          </div>
+                          {vehicle.uid === user.uid ? (
+                            <div className="space-x-2">
+                              <button
+                                onClick={() => {
+                                  setEditingReceipt(r);
+                                  setShowReceiptForm(true);
+                                }}
+                                className="p-1 rounded hover:bg-blue-700 transition"
+                                title="Edit Receipt"
+                              >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                  <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                </svg>
+
+                              </button>
+                              <button onClick={() => setReceiptToDelete(r)}>
+                                ✖️
+                              </button>
+                            </div>
+                          ) : (
                             <button
                               onClick={() => {
                                 if (r.urls && r.urls.length > 0) {
-                                  setSelectedReceiptUrls(r.urls);
+                                  setSelectedReceiptUrl(r.urls);
                                 }
                               }}
-                              className="text-left text-blue-400 hover:underline"
+                              className="ml-auto"
+                              disabled={!(r.urls && r.urls.length > 0)}
                             >
-                              {r.title}
+                              {r.urls && r.urls.length > 0 ? (
+                                <Eye className="w-6 h-6 text-blue-400 hover:text-blue-500" />
+                              ) : (
+                                <EyeOff className="w-6 h-6 text-red-500" />
+                              )}
                             </button>
-                            <span className="ml-2 text-neutral-400">
-                              - ${r.price.toFixed(2)}
-                            </span>
-                          </div>
+                          )}
                         </div>
-                        {vehicle.uid === user.uid ? (
-                          <div className="space-x-2">
-                            <button
-                              onClick={() => {
-                                setEditingReceipt(r);
-                                setShowReceiptForm(true);
-                              }}
-                            >
-                              ✏️
-                            </button>
-                            <button onClick={() => setReceiptToDelete(r)}>
-                              ✖️
-                            </button>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              if (r.urls && r.urls.length > 0) {
-                                setSelectedReceiptUrl(r.urls);
-                              }
-                            }}
-                            className="ml-auto"
-                            disabled={!(r.urls && r.urls.length > 0)}
-                          >
-                            {r.urls && r.urls.length > 0 ? (
-                              <Eye className="w-6 h-6 text-blue-400 hover:text-blue-500" />
-                            ) : (
-                              <EyeOff className="w-6 h-6 text-red-500" />
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p>No receipts</p>
-                )}
+                      ))}
+                    </div>
+                  ) : (
+                    <p>No receipts</p>
+                  )}
+                </div>
                 {vehicle.uid === user.uid && (
                   <div className="flex space-x-4">
                     <button
