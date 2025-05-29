@@ -352,15 +352,15 @@ export default function MyGarage() {
                             <span>Performance Mods:</span>
                             <span>${veh.receipts.filter(r => r.category === 'Performance Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
                           </div>
-                          {/* Total expenses (italic) */}
-                          <div className="flex justify-between italic">
-                            <span>Total expenses:</span>
-                            <span>${receiptsTotal.toFixed(2)}</span>
-                          </div>
                           {/* Paperwork & Taxes */}
                           <div className="flex justify-between">
                             <span>Paperwork & Taxes:</span>
                             <span>${veh.receipts.filter(r => r.category === 'Paperwork & Taxes').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
+                          </div>
+                          {/* Total expenses (italic) */}
+                          <div className="flex justify-between italic">
+                            <span>Total expenses:</span>
+                            <span>${receiptsTotal.toFixed(2)}</span>
                           </div>
                           {/* Total Spent */}
                           <div className="flex justify-between mt-2 font-semibold text-purple-400">
