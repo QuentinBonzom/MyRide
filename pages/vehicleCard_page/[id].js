@@ -60,6 +60,14 @@ function buildSeries(chartData) {
   }));
 }
 
+function formatDateMMDDYYYY(dateObj) {
+  const d = new Date(dateObj);
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${mm}/${dd}/${yyyy}`;
+}
+
 // ApexCharts default options, design revu
 const defaultOptions = {
   chart: {
@@ -391,6 +399,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
           <option>Scheduled Maintenance</option>
           <option>Cosmetic Mods</option>
           <option>Performance Mods</option>
+          <option>Paperwork & Taxes</option>
         </select>
         <input
           placeholder="Mileage"
@@ -429,9 +438,11 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                       disabled={marked}
                     >
                       {url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                        <img
+                        <Image
                           src={url}
                           alt={`Receipt file ${idx + 1}`}
+                          width={80}
+                          height={80}
                           className="object-contain w-20 h-20 bg-white border rounded"
                           style={{ maxWidth: 80, maxHeight: 80 }}
                         />
@@ -508,9 +519,11 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                     background: "#fff",
                   }}
                 >
-                  <img
+                  <Image
                     src={previewUrl}
                     alt="Full preview"
+                    width={800}
+                    height={600}
                     style={{
                       maxWidth: "100%",
                       maxHeight: "100%",
@@ -519,6 +532,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                       background: "#fff",
                       display: "block",
                     }}
+                    unoptimized
                   />
                 </div>
               ) : (
@@ -615,9 +629,9 @@ export default function VehicleCardPage() {
   const [loadingAiQuestion, setLoadingAiQuestion] = useState(false); // Renamed to avoid conflict
   // Ajout de l'état manquant pour les maintenance records
   const [, setLoadingMaintenanceRec] = useState(false);
-  const [selectedReceiptUrls, setSelectedReceiptUrls] = useState([]); // Updated state
-  const [receiptToDelete, setReceiptToDelete] = useState(null);
-  const [selectedAdminDocUrl, setSelectedAdminDocUrl] = useState(null); // New state for admin document modal
+  //const [selectedReceiptUrls, setSelectedReceiptUrls] = useState([]); // Updated state
+  //const [receiptToDelete, setReceiptToDelete] = useState(null);
+  //const [selectedAdminDocUrl, setSelectedAdminDocUrl] = useState(null); // New state for admin document modal
   const [loading, setLoading] = useState(true);
 
   // ...inside VehicleCardPage component...
@@ -922,6 +936,7 @@ export default function VehicleCardPage() {
       case "Scheduled Maintenance":
       case "Cosmetic Mods":
       case "Performance Mods":
+      case "Paperwork & Taxes":
         return receipts
           .filter((receipt) => receipt.category === type)
           .reduce((sum, receipt) => sum + (receipt.price || 0), 0);
@@ -1328,6 +1343,18 @@ export default function VehicleCardPage() {
                   />
                 </label>
               </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold">
+                  Paperwork & Taxes
+                  <input
+                    type="number"
+                    name="paperworkTaxes"
+                    value={formData.paperworkTaxes}
+                    onChange={handleFormChange}
+                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                  />
+                </label>
+              </div>
             </div>
             {/* Full-width Description Field */}
             <div className="md:col-span-3">
@@ -1365,9 +1392,9 @@ export default function VehicleCardPage() {
   }
 
   // add helper to request fullscreen
-  function requestFullScreen(el) {
-    if (el.requestFullscreen) el.requestFullscreen();
-  }
+  //function requestFullScreen(el) {
+  //  if (el.requestFullscreen) el.requestFullscreen();
+  // }
 
   const removeDocument = async (docType) => {
     const docObj = allDocs.find((d) => d.name.toLowerCase().includes(docType));
@@ -1703,6 +1730,12 @@ export default function VehicleCardPage() {
                           2
                         )}`,
                       },
+                      {
+                        label: "Paperwork & Taxes",
+                        value: `$${calculateSum("Paperwork & Taxes").toFixed(
+                          2
+                        )}`,
+                      },
                     ].map((item, idx) => (
                       <option key={idx} value={item.label}>
                         {item.label}
@@ -1752,6 +1785,12 @@ export default function VehicleCardPage() {
                                 label: "Performance Mods",
                                 value: `$${calculateSum(
                                   "Performance Mods"
+                                ).toFixed(2)}`,
+                              },
+                              {
+                                label: "Paperwork & Taxes",
+                                value: `$${calculateSum(
+                                  "Paperwork & Taxes"
                                 ).toFixed(2)}`,
                               },
                             ].find((item) => item.label === selectedItem)?.value
@@ -1886,15 +1925,9 @@ export default function VehicleCardPage() {
                               title={r.title}
                             >
                               {r.date
-                                ? `${
-                                    new Date(
-                                      r.date.seconds
-                                        ? r.date.seconds * 1000
-                                        : r.date
-                                    )
-                                      .toISOString()
-                                      .split("T")[0]
-                                  }`
+                                ? formatDateMMDDYYYY(
+                                    r.date.seconds ? r.date.seconds * 1000 : r.date
+                                  )
                                 : ""}
                               <br />
                               <span className="font-medium">{r.title}</span>
@@ -2042,11 +2075,14 @@ export default function VehicleCardPage() {
                         {vehicle.uid === user.uid ? (
                           <>
                             <div className="flex items-center justify-center w-10 h-16 mb-2">
-                              <img
+                              <Image
                                 src={iconSrcs[type]}
                                 alt={labels[type]}
+                                width={32}
+                                height={32}
                                 className="object-contain w-8 h-8"
                                 style={{ filter: iconFilter }}
+                                unoptimized
                               />
                             </div>
                             <span className="text-sm font-medium text-white">
@@ -2145,11 +2181,14 @@ export default function VehicleCardPage() {
                             <div
                               className={`w-16 h-16 flex items-center justify-center mb-2`}
                             >
-                              <img
+                              <Image
                                 src={iconSrcs[type]}
                                 alt={labels[type]}
+                                width={32}
+                                height={32}
                                 className="object-contain w-8 h-8"
                                 style={{ filter: iconFilter }}
+                                unoptimized
                               />
                             </div>
                             <h3 className="text-sm font-medium text-white">
@@ -2310,8 +2349,8 @@ export default function VehicleCardPage() {
                   onSync={() => window.location.reload()}
                 />
               )}
-            </div>{" "}
-            // close inner grid
+            </div>
+            {/* close inner grid */}
           </div>{" "}
         </section>{" "}
         <secton />
