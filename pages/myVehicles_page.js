@@ -372,6 +372,7 @@ export default function MyGarage() {
           {isAuthenticated ? (
             <>
               {vehicles.map((veh) => {
+
                 // Correction: Utilise les champs renseignés lors de l'ajout du véhicule
                 const maintenanceItems = [
                   {
@@ -427,6 +428,7 @@ export default function MyGarage() {
                   Number(veh.performanceMods) +
                   veh.receipts.reduce((s, r) => s + (Number(r.price) || 0), 0);
 
+
                 return (
                   <motion.div
                     key={veh.id}
@@ -443,6 +445,7 @@ export default function MyGarage() {
                             className="object-cover"
                           />
                         </div>
+
                       ))}
                     </div>
                     <div className="p-4">
@@ -483,6 +486,7 @@ export default function MyGarage() {
                         <div className="flex justify-between mt-2 font-semibold text-purple-400">
                           <span>Total Spent:</span>
                           <span>${Number(totalCost).toFixed(2)}</span>
+
                         </div>
                       </div>
 
