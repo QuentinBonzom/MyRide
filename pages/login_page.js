@@ -10,13 +10,11 @@ const LoginPage = () => {
   const [error, setError] = useState("");
   const router = useRouter();
 
-  // Vérification explicite de l'état d'authentification
+  // Redirection vers /garage_page si déjà connecté
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        if (router.pathname === "/login_page") {
-          router.replace("/myVehicles_page"); // Utilisation de replace pour éviter de revenir à la page de connexion
-        }
+        router.replace("/garage_page");
       }
     });
     return () => unsubscribe();
@@ -28,8 +26,8 @@ const LoginPage = () => {
       await signInWithEmailAndPassword(auth, email, password);
       router.replace("/myVehicles_page"); // Redirige après une connexion réussie
     } catch (err) {
-      console.error("Login error:", err);
-      setError("Invalid email or password. Please try again.");
+      console.error("Erreur de connexion :", err);
+      setError("Email ou mot de passe invalide.");
     }
   };
 
@@ -42,7 +40,7 @@ const LoginPage = () => {
           </div>
         </div>
         <h1 className="mb-6 text-3xl font-bold tracking-tight text-center text-gray-800">
-          Welcome Back
+          Bienvenue
         </h1>
         {error && <p className="mb-4 text-center text-red-500">{error}</p>}
         <div className="mb-5">
@@ -58,7 +56,7 @@ const LoginPage = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 transition border border-gray-300 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder="Enter your email"
+            placeholder="Entrez votre email"
           />
         </div>
         <div className="mb-6">
@@ -66,7 +64,7 @@ const LoginPage = () => {
             htmlFor="password"
             className="block mb-1 text-sm font-medium text-gray-700"
           >
-            Password
+            Mot de passe
           </label>
           <input
             type="password"
@@ -74,22 +72,22 @@ const LoginPage = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 transition border border-gray-300 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder="Enter your password"
+            placeholder="Entrez votre mot de passe"
           />
         </div>
         <button
           onClick={handleLogin}
           className="flex items-center justify-center w-full gap-2 button-main"
         >
-          <FaSignInAlt /> Sign In
+          <FaSignInAlt /> Se connecter
         </button>
-        <p className="mt-6 text-sm text-center text-gray-600">
-          Don&apos;t have an account?{" "}
+        <p className="mt-4 text-sm text-center text-gray-500">
+          Vous n&apos;avez pas de compte ?{" "}
           <button
             onClick={() => router.push("/signup_page")}
             className="font-semibold text-purple-600 transition hover:underline"
           >
-            Sign Up
+            S&apos;inscrire
           </button>
         </p>
       </div>

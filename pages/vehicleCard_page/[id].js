@@ -42,6 +42,8 @@ import {
   Eye, // view icon (owner only)
   Edit,
   Download, // new download icon
+  HelpCircle, // Added for tooltips
+  Trash2, // ← nouveau: icône de suppression
 } from "lucide-react";
 import dynamic from "next/dynamic";
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
@@ -250,9 +252,14 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
   const deleteMarkedFiles = async () => {
     for (const url of toDelete) {
       try {
-        const baseUrl = `listing/${vehicleId}/docs/receipts/`;
-        const fileName = url.split("%2F").pop().split("?")[0];
-        const filePath = baseUrl + decodeURIComponent(fileName);
+        // Correction: Remove any accidental path prefix from fileName
+        let fileName = decodeURIComponent(url.split("/").pop().split("?")[0]);
+        // If fileName contains "listing/", remove everything before the last "/"
+        if (fileName.includes("listing/")) {
+          fileName = fileName.split("listing/").pop();
+          if (fileName.includes("/")) fileName = fileName.split("/").pop();
+        }
+        const filePath = `listing/${vehicleId}/docs/receipts/${fileName}`;
         await deleteObject(ref(storage, filePath));
       } catch (e) {
         console.error(e);
@@ -267,24 +274,29 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
     }
     setUploading(true);
     try {
-      // Remove marked-for-deletion files from the urls array
+      // Ne garder que les URLs existantes non marquées pour suppression
       const keptExisting = existing.filter((url) => !toDelete.includes(url));
-      // Upload new files
+
+      // Upload des nouveaux fichiers
       const receiptId =
         initialData?.id ||
         doc(collection(db, `listing/${vehicleId}/receipts`)).id;
       const uploadedUrls = [];
       for (let file of files) {
-        // preserve file extension
         const ext = file.name.substring(file.name.lastIndexOf("."));
         const name = `${receiptId}-${Date.now()}${ext}`;
         const storageRef = ref(
           storage,
           `listing/${vehicleId}/docs/receipts/${name}`
         );
-        const snap = await uploadBytesResumable(storageRef, file);
+        // ← PLACEZ ICI votre metadata
+        const snap = await uploadBytesResumable(storageRef, file, {
+          customMetadata: { ownerId: auth.currentUser.uid },
+        });
         uploadedUrls.push(await getDownloadURL(snap.ref));
       }
+
+      // Construction du reçu
       const receipt = {
         title,
         date: new Date(date),
@@ -292,7 +304,9 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
         mileage: isNaN(+mileage) ? null : +mileage,
         price: +price,
         urls: [...keptExisting, ...uploadedUrls],
+        uid: auth.currentUser.uid, // ← Ajouté : identifiant du créateur
       };
+
       await setDoc(
         doc(db, `listing/${vehicleId}/receipts`, receiptId),
         receipt,
@@ -303,14 +317,14 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
       await deleteMarkedFiles();
 
       // --- Update vehicle mileage if needed ---
-      const vehicleRef = doc(db, "listing", vehicleId);
-      const vehicleSnap = await getDoc(vehicleRef);
-      if (vehicleSnap.exists()) {
-        const vehicleData = vehicleSnap.data();
-        const currentMileage = Number(vehicleData.mileage) || 0;
+      const mileageRef = doc(db, "listing", vehicleId);
+      const mileageSnap = await getDoc(mileageRef);
+      if (mileageSnap.exists()) {
+        const vData = mileageSnap.data();
+        const currentMileage = Number(vData.mileage) || 0;
         const newMileage = isNaN(+mileage) ? currentMileage : Number(mileage);
         if (newMileage > currentMileage) {
-          await setDoc(vehicleRef, { mileage: newMileage }, { merge: true });
+          await setDoc(mileageRef, { mileage: newMileage }, { merge: true });
         }
       }
 
@@ -428,28 +442,14 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                       title={marked ? "Will be deleted" : "Click to enlarge"}
                       disabled={marked}
                     >
-                      {url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                        <img
-                          src={url}
-                          alt={`Receipt file ${idx + 1}`}
-                          className="object-contain w-20 h-20 bg-white border rounded"
-                          style={{ maxWidth: 80, maxHeight: 80 }}
-                        />
-                      ) : (
-                        <iframe
-                          src={url}
-                          title={`PDF preview ${idx + 1}`}
-                          className="bg-white border rounded"
-                          style={{
-                            width: 80,
-                            height: 80,
-                            objectFit: "contain",
-                            display: "block",
-                            background: "#fff",
-                            pointerEvents: "none",
-                          }}
-                        />
-                      )}
+                      <Image
+                        key={idx}
+                        src={url}
+                        alt={`Receipt ${idx}`}
+                        width={80}
+                        height={80}
+                        className="object-contain bg-white border rounded"
+                      />
                     </button>
                     {/* Delete/Undo button: simple cross, no background */}
                     {marked ? (
@@ -498,29 +498,14 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                 ×
               </button>
               {previewUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "70vh",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#fff",
-                  }}
-                >
-                  <img
-                    src={previewUrl}
-                    alt="Full preview"
-                    style={{
-                      maxWidth: "100%",
-                      maxHeight: "100%",
-                      objectFit: "contain",
-                      borderRadius: "0.5rem",
-                      background: "#fff",
-                      display: "block",
-                    }}
-                  />
-                </div>
+                <Image
+                  src={previewUrl}
+                  alt="Full preview"
+                  layout="responsive"
+                  width={1000}
+                  height={700}
+                  className="object-contain"
+                />
               ) : (
                 <iframe
                   src={previewUrl}
@@ -615,47 +600,54 @@ export default function VehicleCardPage() {
   const [loadingAiQuestion, setLoadingAiQuestion] = useState(false); // Renamed to avoid conflict
   // Ajout de l'état manquant pour les maintenance records
   const [, setLoadingMaintenanceRec] = useState(false);
-  const [selectedReceiptUrls, setSelectedReceiptUrls] = useState([]); // Updated state
-  const [receiptToDelete, setReceiptToDelete] = useState(null);
-  const [selectedAdminDocUrl, setSelectedAdminDocUrl] = useState(null); // New state for admin document modal
   const [loading, setLoading] = useState(true);
+  const [showEstimatedInfoPopup, setShowEstimatedInfoPopup] = useState(false);
+  const [showVariationInfoPopup, setShowVariationInfoPopup] = useState(false);
 
-  // ...inside VehicleCardPage component...
+  // Supprime définitivement Storage + Firestore
+  const handleFullDelete = async (receipt) => {
+    try {
+      await Promise.all(
+        (receipt.urls || []).map(async (url) => {
+          // Correction: Remove any accidental path prefix from fileName
+          let fileName = decodeURIComponent(url.split("/").pop().split("?")[0]);
+          if (fileName.includes("listing/")) {
+            fileName = fileName.split("listing/").pop();
+            if (fileName.includes("/")) fileName = fileName.split("/").pop();
+          }
+          const filePath = `listing/${id}/docs/receipts/${fileName}`;
+          await deleteObject(ref(storage, filePath));
+        })
+      );
+      await deleteDoc(doc(db, `listing/${id}/receipts`, receipt.id));
+      setReceipts((prev) => prev.filter((r) => r.id !== receipt.id));
+      toast.success("Receipt supprimé définitivement");
+    } catch (e) {
+      console.error("Error deleting receipt:", e);
+      toast.error("Impossible de supprimer le receipt");
+    }
+  };
+
+  // Partage de la page via Web Share API ou copie du lien
   const handleShare = async () => {
     try {
-      // Fetch the current user's firstName from Firebase
       const userRef = doc(db, "members", auth.currentUser.uid);
       const userSnap = await getDoc(userRef);
-
-      if (!userSnap.exists()) {
-        console.error("User data not found.");
-        return;
-      }
-
+      if (!userSnap.exists()) return console.error("User data not found.");
       const { firstName } = userSnap.data();
-
-      // Prepare the share data
       const shareData = {
         title: `${firstName} invites you to check this ${vehicle.year} ${vehicle.make} ${vehicle.model}`,
         url: window.location.href,
       };
-
-      // Use the Web Share API if available
       if (navigator.share) {
-        try {
-          await navigator.share(shareData);
-          console.log("Page shared successfully");
-        } catch (error) {
-          console.error("Error sharing the page:", error);
-        }
+        await navigator.share(shareData);
       } else {
-        // Fallback for browsers that don't support the Web Share API
-        navigator.clipboard.writeText(shareData.url).then(() => {
-          alert("Link copied to clipboard!");
-        });
+        await navigator.clipboard.writeText(shareData.url);
+        toast.success("Link copied to clipboard!");
       }
-    } catch (error) {
-      console.error("Error fetching user data for sharing:", error);
+    } catch (e) {
+      console.error("Error sharing:", e);
+      toast.error("Unable to share");
     }
   };
 
@@ -689,10 +681,12 @@ export default function VehicleCardPage() {
           .sort((a, b) => (b.date?.seconds || 0) - (a.date?.seconds || 0))
       );
 
+      // Correction: fetch all images in the photo folder, not just the first 4
       const listPhotos = await listAll(ref(storage, `listing/${id}/photos/`));
-      setImages(
-        await Promise.all(listPhotos.items.map((i) => getDownloadURL(i)))
+      const urls = await Promise.all(
+        listPhotos.items.map((i) => getDownloadURL(i))
       );
+      setImages(urls);
 
       const mpSnap = await getDoc(doc(db, "on_marketplace", id));
       if (mpSnap.exists()) {
@@ -905,28 +899,6 @@ export default function VehicleCardPage() {
       toast.info("Vehicle removed from marketplace");
     } catch {
       toast.error("Unable to remove vehicle");
-    }
-  };
-
-  // Calcul des sommes
-  const calculateSum = (type) => {
-    switch (type) {
-      case "Total Spent":
-        return (
-          receipts.reduce((sum, receipt) => sum + (receipt.price || 0), 0) +
-          (Number(vehicle?.boughtAt) || 0)
-        );
-      case "Without Purchase Price":
-        return receipts.reduce((sum, receipt) => sum + (receipt.price || 0), 0);
-      case "Repair":
-      case "Scheduled Maintenance":
-      case "Cosmetic Mods":
-      case "Performance Mods":
-        return receipts
-          .filter((receipt) => receipt.category === type)
-          .reduce((sum, receipt) => sum + (receipt.price || 0), 0);
-      default:
-        return 0;
     }
   };
 
@@ -1189,6 +1161,19 @@ export default function VehicleCardPage() {
                   />
                 </label>
               </div>
+              <div>
+                <label className="block mb-1 text-sm font-semibold">
+                  Without Purchase Price
+                  <input
+                    type="number"
+                    name="withoutPurchasePrice"
+                    value={formData.withoutPurchasePrice}
+                    onChange={handleFormChange}
+                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    placeholder="Enter total without purchase price"
+                  />
+                </label>
+              </div>
             </div>
             {/* Technical Fields */}
             <div className="space-y-4">
@@ -1365,9 +1350,9 @@ export default function VehicleCardPage() {
   }
 
   // add helper to request fullscreen
-  function requestFullScreen(el) {
-    if (el.requestFullscreen) el.requestFullscreen();
-  }
+  // function requestFullScreen(el) {
+  //   if (el.requestFullscreen) el.requestFullscreen();
+  // }
 
   const removeDocument = async (docType) => {
     const docObj = allDocs.find((d) => d.name.toLowerCase().includes(docType));
@@ -1443,10 +1428,37 @@ export default function VehicleCardPage() {
       ? ((aiCurrentValue / aiSeries[0] - 1) * 100).toFixed(2)
       : null;
 
+  // Helper to get the correct value for each dropdown label
+  const getMetricValue = (label) => {
+    switch (label) {
+      case "Total Spent":
+        // Additionne tous les coûts de maintenance
+        return (
+          (Number(vehicle?.performanceMods) || 0) +
+          (Number(vehicle?.cosmeticMods) || 0) +
+          (Number(vehicle?.scheduledMaintenance) || 0) +
+          (Number(vehicle?.repairCost) || 0) +
+          (Number(vehicle?.withoutPurchasePrice) || 0)
+        );
+      case "Without Purchase Price":
+        return Number(vehicle?.withoutPurchasePrice) || 0;
+      case "Repair":
+        return Number(vehicle?.repairCost) || 0;
+      case "Scheduled Maintenance":
+        return Number(vehicle?.scheduledMaintenance) || 0;
+      case "Cosmetic Mods":
+        return Number(vehicle?.cosmeticMods) || 0;
+      case "Performance Mods":
+        return Number(vehicle?.performanceMods) || 0;
+      default:
+        return 0;
+    }
+  };
+
   return (
     <>
       <ToastContainer />
-      <div className="container px-4 py-10 mx-auto text-white md:pt-28 bg-zinc-900">
+      <div className="container px-4 py-10 mx-auto text-white md:pt-3 bg-zinc-900">
         {/* Header */}
         <header className="flex items-center justify-center gap-2 pt-8 mb-8 text-center">
           <h1 className="text-4xl font-bold">
@@ -1585,49 +1597,57 @@ export default function VehicleCardPage() {
         {enlargedIdx !== null && (
           <div
             className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-            onClick={() => setEnlargedIdx(null)} // Ferme le modal au clic en dehors
+            onClick={() => setEnlargedIdx(null)}
           >
-            <button
-              className="absolute text-2xl text-white top-4 right-4 hover:text-gray-300"
-              onClick={() => setEnlargedIdx(null)} // Bouton pour fermer le modal
-            >
-              &times;
-            </button>
-            <div className="relative w-full max-w-2xl max-h-[80vh] flex items-center">
-              {/* Flèche gauche */}
+            {/* Left arrow */}
+            {images.length > 1 && (
               <button
-                className="absolute left-[-50px] z-10 p-3 text-white bg-gray-800 rounded-full shadow-lg hover:bg-gray-700"
+                className="absolute z-10 p-3 text-white bg-gray-800 shadow-lg left-4 rounded-xl hover:bg-gray-700"
+                style={{ top: "50%", transform: "translateY(-50%)" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   setEnlargedIdx((prev) =>
                     prev > 0 ? prev - 1 : images.length - 1
                   );
                 }}
+                aria-label="Previous image"
               >
                 &#8249;
               </button>
-              {/* Image agrandie */}
+            )}
+            {/* Close button */}
+            <button
+              className="absolute text-2xl text-white top-4 right-4 hover:text-gray-300"
+              onClick={() => setEnlargedIdx(null)}
+            >
+              &times;
+            </button>
+            <div className="relative w-full max-w-2xl max-h-[80vh] flex items-center">
               <Image
-                src={images[enlargedIdx]} // Utilise l'index pour afficher l'image correcte
+                src={images[enlargedIdx]}
                 alt={`Vehicle ${enlargedIdx}`}
                 className="object-contain max-w-full max-h-full"
                 width={1000}
                 height={700}
                 priority
               />
-              {/* Flèche droite */}
+            </div>
+            {/* Right arrow */}
+            {images.length > 1 && (
               <button
-                className="absolute right-[-50px] z-10 p-3 text-white bg-gray-800 rounded-full shadow-lg hover:bg-gray-700"
+                className="absolute z-10 p-3 text-white bg-gray-800 rounded-full shadow-lg right-4 hover:bg-gray-700"
+                style={{ top: "50%", transform: "translateY(-50%)" }}
                 onClick={(e) => {
                   e.stopPropagation();
                   setEnlargedIdx((prev) =>
                     prev < images.length - 1 ? prev + 1 : 0
                   );
                 }}
+                aria-label="Next image"
               >
                 &#8250;
               </button>
-            </div>
+            )}
           </div>
         )}
         {/* NEW: Description Card */}
@@ -1673,39 +1693,15 @@ export default function VehicleCardPage() {
                       Select a value
                     </option>
                     {[
-                      {
-                        label: "Total Spent",
-                        value: `$${calculateSum("Total Spent").toFixed(2)}`,
-                      },
-                      {
-                        label: "Without Purchase Price",
-                        value: `$${calculateSum(
-                          "Without Purchase Price"
-                        ).toFixed(2)}`,
-                      },
-                      {
-                        label: "Repair",
-                        value: `$${calculateSum("Repair").toFixed(2)}`,
-                      },
-                      {
-                        label: "Scheduled Maintenance",
-                        value: `$${calculateSum(
-                          "Scheduled Maintenance"
-                        ).toFixed(2)}`,
-                      },
-                      {
-                        label: "Cosmetic Mods",
-                        value: `$${calculateSum("Cosmetic Mods").toFixed(2)}`,
-                      },
-                      {
-                        label: "Performance Mods",
-                        value: `$${calculateSum("Performance Mods").toFixed(
-                          2
-                        )}`,
-                      },
-                    ].map((item, idx) => (
-                      <option key={idx} value={item.label}>
-                        {item.label}
+                      "Total Spent",
+                      "Without Purchase Price",
+                      "Repair",
+                      "Scheduled Maintenance",
+                      "Cosmetic Mods",
+                      "Performance Mods",
+                    ].map((label) => (
+                      <option key={label} value={label}>
+                        {label}
                       </option>
                     ))}
                   </select>
@@ -1718,44 +1714,7 @@ export default function VehicleCardPage() {
                           {selectedItem}
                         </span>
                         <span className="mt-1 text-2xl font-bold text-green-400">
-                          {
-                            [
-                              {
-                                label: "Total Spent",
-                                value: `$${calculateSum("Total Spent").toFixed(
-                                  2
-                                )}`,
-                              },
-                              {
-                                label: "Without Purchase Price",
-                                value: `$${calculateSum(
-                                  "Without Purchase Price"
-                                ).toFixed(2)}`,
-                              },
-                              {
-                                label: "Repair",
-                                value: `$${calculateSum("Repair").toFixed(2)}`,
-                              },
-                              {
-                                label: "Scheduled Maintenance",
-                                value: `$${calculateSum(
-                                  "Scheduled Maintenance"
-                                ).toFixed(2)}`,
-                              },
-                              {
-                                label: "Cosmetic Mods",
-                                value: `$${calculateSum(
-                                  "Cosmetic Mods"
-                                ).toFixed(2)}`,
-                              },
-                              {
-                                label: "Performance Mods",
-                                value: `$${calculateSum(
-                                  "Performance Mods"
-                                ).toFixed(2)}`,
-                              },
-                            ].find((item) => item.label === selectedItem)?.value
-                          }
+                          ${getMetricValue(selectedItem).toFixed(2)}
                         </span>
                       </>
                     ) : (
@@ -1913,43 +1872,17 @@ export default function VehicleCardPage() {
                                     setEditingReceipt(r);
                                     setShowReceiptForm(true);
                                   }}
-                                  className="p-1 text-purple-400 transition rounded hover:text-pink-500"
+                                  className="p-1 text-purple-400 hover:text-pink-500"
                                   title="Edit Receipt"
                                 >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="1.5"
-                                    stroke="currentColor"
-                                    className="w-5 h-5"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                                    />
-                                  </svg>
+                                  <Edit className="w-5 h-5" />
                                 </button>
                                 <button
-                                  onClick={() => setReceiptToDelete(r)}
-                                  className="p-1 transition rounded text-purple500 hover:text-pink-500"
-                                  title="Delete Receipt"
+                                  onClick={() => handleFullDelete(r)}
+                                  className="p-1 text-red-500 hover:text-red-700"
+                                  title="Supprimer ce reçu"
                                 >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="1.5"
-                                    stroke="currentColor"
-                                    className="w-6 h-6"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M6 18 18 6M6 6l12 12"
-                                    />
-                                  </svg>
+                                  <Trash2 className="w-5 h-5" />
                                 </button>
                               </>
                             ) : (
@@ -1994,7 +1927,7 @@ export default function VehicleCardPage() {
                   Paperwork
                 </h2>
                 {/* Grid for Title, Registration and Inspection */}
-                <div className="flex gap-2 p-2 overflow-x-auto no-scrollbar">
+                <div className="flex gap-2 p-2 overflow-x-auto no-scrollbar md:justify-center">
                   {["title", "registration", "inspection"].map((type) => {
                     const docObj = allDocs.find((d) =>
                       d.name.toLowerCase().includes(type)
@@ -2042,10 +1975,12 @@ export default function VehicleCardPage() {
                         {vehicle.uid === user.uid ? (
                           <>
                             <div className="flex items-center justify-center w-10 h-16 mb-2">
-                              <img
+                              <Image
                                 src={iconSrcs[type]}
                                 alt={labels[type]}
-                                className="object-contain w-8 h-8"
+                                width={32}
+                                height={32}
+                                className="object-contain"
                                 style={{ filter: iconFilter }}
                               />
                             </div>
@@ -2097,7 +2032,7 @@ export default function VehicleCardPage() {
                                         <path
                                           strokeLinecap="round"
                                           strokeLinejoin="round"
-                                          d="M6 18 18 6M6 6l12 12"
+                                          d="M6 18 18 6M6  6l12 12"
                                         />
                                       </svg>
                                     </button>
@@ -2145,10 +2080,12 @@ export default function VehicleCardPage() {
                             <div
                               className={`w-16 h-16 flex items-center justify-center mb-2`}
                             >
-                              <img
+                              <Image
                                 src={iconSrcs[type]}
                                 alt={labels[type]}
-                                className="object-contain w-8 h-8"
+                                width={32}
+                                height={32}
+                                className="object-contain"
                                 style={{ filter: iconFilter }}
                               />
                             </div>
@@ -2181,15 +2118,31 @@ export default function VehicleCardPage() {
                 {/* En-tête KPI */}
                 <div className="flex flex-col items-start justify-between md:flex-row">
                   <div>
-                    <h3 className="text-xl font-semibold text-white">
+                    <h3 className="flex items-center text-xl font-semibold text-white">
                       ESTIMATED AI VALUE
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center ml-2 text-neutral-400 hover:text-neutral-300"
+                        onClick={() => setShowEstimatedInfoPopup(true)}
+                      >
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
                     </h3>
                     <p className="text-3xl font-bold text-green-400">
                       ${aiCurrentValue.toLocaleString()}
                     </p>
                   </div>
                   <div className="mt-2 md:mt-0">
-                    <h4 className="text-sm text-neutral-400">AI VARIATION</h4>
+                    <h4 className="flex items-center text-sm text-neutral-400">
+                      AI VARIATION
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center ml-2 text-neutral-400 hover:text-neutral-300"
+                        onClick={() => setShowVariationInfoPopup(true)}
+                      >
+                        <HelpCircle className="w-4 h-4" />
+                      </button>
+                    </h4>
                     {aiVariationPct !== null && (
                       <p
                         className={`text-xl font-semibold ${
@@ -2219,7 +2172,14 @@ export default function VehicleCardPage() {
                   <div className="w-auto rounded-lg h-80">
                     <Chart
                       options={defaultOptions}
-                      series={buildSeries(chartData)}
+                      series={buildSeries({
+                        ...chartData,
+                        datasets: chartData.datasets.filter(
+                          (ds) =>
+                            ds.label === "AI Estimated" ||
+                            ds.label === "Bought At"
+                        ),
+                      })}
                       type="line"
                       height="100%"
                     />
@@ -2228,7 +2188,7 @@ export default function VehicleCardPage() {
                 {/* End Finance Section */}
 
                 {/* Actions */}
-                <div className="flex flex-col items-center justify-between space-y-3 md:flex-row md:space-y-0 md:space-x-4">
+                <div className="flex flex-col items-center justify-between mb-16 space-y-3 md:flex-row md:space-y-0 md:space-x-4">
                   {user.uid === vehicle.uid &&
                     (isListed ? (
                       <button
@@ -2266,7 +2226,7 @@ export default function VehicleCardPage() {
               {/* Marketplace Modal */}
               {showMarketplaceModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-                  <div className="w-full max-w-sm p-6 text-white border rounded shadow-xl bg-neutral-800 border-neutral-700">
+                  <div className="w-full max-w-sm p-6 text-white border rounded shadow-xl bg-neutral-800 border-neutral-700 ">
                     <h2 className="mb-4 text-xl font-bold text-center">
                       Add to Marketplace
                     </h2>
@@ -2311,11 +2271,69 @@ export default function VehicleCardPage() {
                 />
               )}
             </div>{" "}
-            // close inner grid
           </div>{" "}
         </section>{" "}
         <secton />
       </div>{" "}
-    </> // close Fragment
-  ); // end of return
-} // end of VehicleCardPage
+      {/* Pop-up: Estimated value info */}
+      {showEstimatedInfoPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setShowEstimatedInfoPopup(false)}
+        >
+          <div
+            className="relative max-w-md p-6 text-white rounded-lg shadow-xl bg-neutral-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-2 right-2 text-neutral-400 hover:text-white"
+              onClick={() => setShowEstimatedInfoPopup(false)}
+            >
+              ×
+            </button>
+            <h4 className="mb-2 text-lg font-semibold">
+              How is the AI estimated value calculated?
+            </h4>
+            <p className="text-sm leading-relaxed">
+              The AI uses:
+              <ul className="mt-2 ml-4 list-disc">
+                <li>Recent market data</li>
+                <li>Maintenance history and mileage</li>
+                <li>Age and depreciation</li>
+                <li>Local conditions</li>
+                <li>Modifications and upgrades</li>
+              </ul>
+            </p>
+          </div>
+        </div>
+      )}
+      {/* Pop-up: Variation info */}
+      {showVariationInfoPopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+          onClick={() => setShowVariationInfoPopup(false)}
+        >
+          <div
+            className="relative max-w-md p-6 text-white rounded-lg shadow-xl bg-neutral-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="absolute top-2 right-2 text-neutral-400 hover:text-white"
+              onClick={() => setShowVariationInfoPopup(false)}
+            >
+              ×
+            </button>
+            <h4 className="mb-2 text-lg font-semibold">
+              How is the variation calculated?
+            </h4>
+            <p className="text-sm leading-relaxed ">
+              Variation = ((current value − initial value) / initial value) ×
+              100. Green indicates a positive change; red indicates a negative
+              change.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
