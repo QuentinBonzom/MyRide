@@ -580,7 +580,7 @@ export default function VehicleCardPage() {
   const router = useRouter();
   const [showInfo, setShowInfo] = useState(false);
   const { id } = router.query;
-
+  
   // Hooks dans un ordre fixe
   const [user, setUser] = useState(null);
   const [vehicle, setVehicle] = useState(null);
