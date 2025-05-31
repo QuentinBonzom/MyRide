@@ -278,36 +278,12 @@ export default function MyGarage() {
           {isAuthenticated ? (
             <>
               {vehicles.map((veh) => {
-                const maintenanceItems = [
-                  {
-                    label: "Without Purchase Price",
-                    value: veh.receipts.reduce((sum, r) => sum + (Number(r.price) || 0), 0) + // Total receipts
-                           veh.receipts.filter(r => r.category === 'Repair').reduce((sum, r) => sum + (Number(r.price) || 0), 0) +
-                           veh.receipts.filter(r => r.category === 'Scheduled Maintenance').reduce((sum, r) => sum + (Number(r.price) || 0), 0) +
-                           veh.receipts.filter(r => r.category === 'Cosmetic Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0) +
-                           veh.receipts.filter(r => r.category === 'Performance Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                  },
-                  { label: "Repair", value: veh.receipts.filter(r => r.category === 'Repair').reduce((sum, r) => sum + (Number(r.price) || 0), 0) },
-                  {
-                    label: "Scheduled Maintenance",
-                    value: veh.receipts.filter(r => r.category === 'Scheduled Maintenance').reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                  },
-                  { label: "Cosmetic Mods", value: veh.receipts.filter(r => r.category === 'Cosmetic Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0) },
-                  {
-                    label: "Performance Mods",
-                    value: veh.receipts.filter(r => r.category === 'Performance Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                  },
-                ];
 
                 const receiptsTotal = veh.receipts.reduce(
                   (s, r) => s + (Number(r.price) || 0),
                   0
                 );
-                const maintenanceTotal = maintenanceItems.reduce(
-                  (s, it) => s + it.value,
-                  0
-                );
-                const totalCost = receiptsTotal + maintenanceTotal + (Number(veh.boughtAt) || 0); // Include purchase price
+                const totalCost = receiptsTotal + (Number(veh.boughtAt) || 0); // Include purchase price
 
                 return (
                   
@@ -350,20 +326,44 @@ export default function MyGarage() {
                           </p>
                         </div>
                         <div className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
-                          <h4 className="mb-1 font-semibold">Maintenance</h4>
-                          {maintenanceItems.map((it) => {
-                            const val = it.value;
-                            return (
-                              <div
-                                key={it.label}
-                                className="flex justify-between"
-                              >
-                                <span>{it.label}:</span>
-                                <span>${val.toFixed(2)}</span>
-                              </div>
-                            );
-                          })}
-                          <div className="flex justify-between mt-2 font-semibold text-green-400">
+                          <h4 className="mb-1 font-semibold">Expenses</h4>
+                          {/* Purchase price line */}
+                          <div className="flex justify-between">
+                            <span>Purchase price:</span>
+                            <span>${Number(veh.boughtAt || 0).toFixed(2)}</span>
+                          </div>
+                          {/* Repair */}
+                          <div className="flex justify-between">
+                            <span>Repair:</span>
+                            <span>${veh.receipts.filter(r => r.category === 'Repair').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
+                          </div>
+                          {/* Scheduled Maintenance */}
+                          <div className="flex justify-between">
+                            <span>Scheduled Maintenance:</span>
+                            <span>${veh.receipts.filter(r => r.category === 'Scheduled Maintenance').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
+                          </div>
+                          {/* Cosmetic Mods */}
+                          <div className="flex justify-between">
+                            <span>Cosmetic Mods:</span>
+                            <span>${veh.receipts.filter(r => r.category === 'Cosmetic Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
+                          </div>
+                          {/* Performance Mods (keep only this one after Cosmetic Mods) */}
+                          <div className="flex justify-between">
+                            <span>Performance Mods:</span>
+                            <span>${veh.receipts.filter(r => r.category === 'Performance Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
+                          </div>
+                          {/* Paperwork & Taxes */}
+                          <div className="flex justify-between">
+                            <span>Paperwork & Taxes:</span>
+                            <span>${veh.receipts.filter(r => r.category === 'Paperwork & Taxes').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
+                          </div>
+                          {/* Total expenses (italic) */}
+                          <div className="flex justify-between italic">
+                            <span>Total expenses:</span>
+                            <span>${receiptsTotal.toFixed(2)}</span>
+                          </div>
+                          {/* Total Spent */}
+                          <div className="flex justify-between mt-2 font-semibold text-purple-400">
                             <span>Total Spent:</span>
                             <span>${totalCost.toFixed(2)}</span>
                           </div>
@@ -375,7 +375,7 @@ export default function MyGarage() {
                             e.stopPropagation();
                             openVehicle(veh.id);
                           }}
-                          className="px-10 py-2 font-medium bg-purple-600 rounded-lg hover:bg-purple-700"
+                          className="button-main px-10 py-2"
                         >
                           View more
                         </button>
@@ -384,7 +384,7 @@ export default function MyGarage() {
                             e.stopPropagation();
                             deleteVehicle(veh.id);
                           }}
-                          className="px-10 py-2 font-medium bg-red-600 rounded-lg hover:bg-red-700"
+                          className="px-10 py-2 font-medium border border-gray-300 text-gray-400 bg-transparent rounded-lg hover:border-red-400 hover:text-red-600 transition"
                         >
                           Delete
                         </button>

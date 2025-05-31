@@ -303,11 +303,11 @@ export default function SignUp() {
   // ────────────────────────────────────────────────────────────────────────────────
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-zinc-900">
-      <div className="relative w-full max-w-2xl flex flex-row bg-white shadow-lg rounded-2xl">
+      <div className="relative flex flex-row w-full max-w-2xl bg-white shadow-lg rounded-2xl">
         {/* Profile Picture Preview (left) - only show in Step 3 */}
         {step === 3 && (
           <div className="flex flex-col items-center justify-center w-1/3 p-4 border-r border-gray-200">
-            <div className="relative w-32 h-32 rounded-full overflow-hidden shadow-lg bg-gray-100">
+            <div className="relative w-32 h-32 overflow-hidden bg-gray-100 rounded-full shadow-lg">
               <img
                 src={
                   croppedImage
@@ -322,7 +322,7 @@ export default function SignUp() {
               {/* Cropping Modal */}
               {cropping && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-                  <div className="bg-white p-6 rounded-xl shadow-xl flex flex-col items-center">
+                  <div className="flex flex-col items-center p-6 bg-white shadow-xl rounded-xl">
                     <div className="relative w-72 h-72">
                       <Cropper
                         image={image ? URL.createObjectURL(image) : undefined}
@@ -336,13 +336,13 @@ export default function SignUp() {
                     </div>
                     <div className="flex gap-4 mt-4">
                       <button
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg font-bold"
+                        className="px-4 py-2 font-bold text-white bg-purple-600 rounded-lg"
                         onClick={handleCropDone}
                       >
                         Crop
                       </button>
                       <button
-                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-bold"
+                        className="px-4 py-2 font-bold text-gray-700 bg-gray-200 rounded-lg"
                         onClick={() => setCropping(false)}
                       >
                         Cancel
@@ -352,7 +352,7 @@ export default function SignUp() {
                 </div>
               )}
             </div>
-            <div className="mt-4 text-center text-gray-500 text-xs">
+            <div className="mt-4 text-xs text-center text-gray-500">
                Preview
             </div>
           </div>
@@ -399,7 +399,7 @@ export default function SignUp() {
               </button>
               <button
                 onClick={handleAppleSignIn}
-                className="w-full py-3 font-bold text-black bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex items-center justify-center gap-2"
+                className="flex items-center justify-center w-full gap-2 py-3 font-bold text-black bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
                 disabled={loading}
               >
                 <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-black">
@@ -500,12 +500,12 @@ export default function SignUp() {
                           setPassword(e.target.value);
                           setPasswordStrength(checkPasswordStrength(e.target.value));
                         }}
-                        className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12"
+                        className="w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword((v) => !v)}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        className="absolute text-gray-500 -translate-y-1/2 right-2 top-1/2 hover:text-gray-700"
                         tabIndex={-1}
                       >
                         {showPassword ? (
@@ -539,7 +539,7 @@ export default function SignUp() {
                     </button>
                     <button
                       onClick={handleNext}
-                      className="px-4 py-2 font-bold text-white bg-gradient-to-r from-pink-500 to-purple-700 rounded-lg hover:from-pink-600 hover:to-purple-800"
+                      className="px-4 py-2 font-bold text-white rounded-lg bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800"
                       disabled={
                         checkingEmail ||
                         !!errors.email ||
@@ -585,7 +585,7 @@ export default function SignUp() {
                     <button
                       onClick={handleSignUp}
                       disabled={loading}
-                      className="px-4 py-2 font-bold text-white bg-gradient-to-r from-pink-500 to-purple-700 rounded-lg hover:from-pink-600 hover:to-purple-800"
+                      className="px-4 py-2 font-bold text-white rounded-lg bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800"
                     >
                       {loading ? "Signing up..." : "Sign Up"}
                     </button>
