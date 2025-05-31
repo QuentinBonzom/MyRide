@@ -60,9 +60,10 @@ export default async function handler(req, res) {
 
       // Format the new element for `ai_estimated_value`
       const currentDate = new Date();
-      const formattedDate = `${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(currentDate.getDate()).padStart(2, '0')}-${currentDate.getFullYear()}`;
+      const formattedDate = `${String(currentDate.getMonth() + 1).padStart(2, '0')}/${String(currentDate.getDate()).padStart(2, '0')}/${currentDate.getFullYear()}`;
       const newElement = `${estimation}-${formattedDate}`;
 
+      // Add the new element to the array
       // Ensure only valid strings are saved and replace the same day's value
       const existingData = vehicleDoc.data().ai_estimated_value || [];
       const filteredData = existingData.filter((item) => !item.endsWith(`-${formattedDate}`)); // Remove existing value for today

@@ -603,7 +603,15 @@ export default function VehicleCardPage() {
   const [loading, setLoading] = useState(true);
   const [showEstimatedInfoPopup, setShowEstimatedInfoPopup] = useState(false);
   const [showVariationInfoPopup, setShowVariationInfoPopup] = useState(false);
+  const [selectedReceiptUrls, setSelectedReceiptUrls] = useState(null);
+  const [selectedAdminDocUrl, setSelectedAdminDocUrl] = useState(null);
+  const [receiptIdx, setReceiptIdx] = useState(0);
 
+  // When opening receipts:
+  const openReceipts = (urls) => {
+    setSelectedReceiptUrls(urls);
+    setReceiptIdx(0);
+  };
   // Supprime définitivement Storage + Firestore
   const handleFullDelete = async (receipt) => {
     try {
@@ -837,6 +845,7 @@ export default function VehicleCardPage() {
       setLoadingAiQuestion(false);
     }
   };
+
 
   // Fonction pour obtenir la recommandation de maintenance basée sur le mileage
   const fetchMaintenanceRec = async () => {
@@ -1430,30 +1439,41 @@ export default function VehicleCardPage() {
 
   // Helper to get the correct value for each dropdown label
   const getMetricValue = (label) => {
-    switch (label) {
-      case "Total Spent":
-        // Additionne tous les coûts de maintenance
-        return (
-          (Number(vehicle?.performanceMods) || 0) +
-          (Number(vehicle?.cosmeticMods) || 0) +
-          (Number(vehicle?.scheduledMaintenance) || 0) +
-          (Number(vehicle?.repairCost) || 0) +
-          (Number(vehicle?.withoutPurchasePrice) || 0)
-        );
-      case "Without Purchase Price":
-        return Number(vehicle?.withoutPurchasePrice) || 0;
-      case "Repair":
-        return Number(vehicle?.repairCost) || 0;
-      case "Scheduled Maintenance":
-        return Number(vehicle?.scheduledMaintenance) || 0;
-      case "Cosmetic Mods":
-        return Number(vehicle?.cosmeticMods) || 0;
-      case "Performance Mods":
-        return Number(vehicle?.performanceMods) || 0;
-      default:
-        return 0;
-    }
-  };
+  if (!receipts) return 0;
+  switch (label) {
+    case "Total Spent":
+      // Purchase price + all receipts
+      return (
+        Number(vehicle?.boughtAt || 0) +
+        receipts.reduce((sum, r) => sum + (Number(r.price) || 0), 0)
+      );
+    case "Total Expenses":
+      // All receipts, no purchase price
+      return receipts.reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+    case "Repair":
+      return receipts
+        .filter((r) => r.category === "Repair")
+        .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+    case "Scheduled Maintenance":
+      return receipts
+        .filter((r) => r.category === "Scheduled Maintenance")
+        .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+    case "Cosmetic Mods":
+      return receipts
+        .filter((r) => r.category === "Cosmetic Mods")
+        .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+    case "Performance Mods":
+      return receipts
+        .filter((r) => r.category === "Performance Mods")
+        .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+    case "Paperwork & Taxes":
+      return receipts
+        .filter((r) => r.category === "Paperwork & Taxes")
+        .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+    default:
+      return 0;
+  }
+};
 
   return (
     <>
@@ -1694,11 +1714,12 @@ export default function VehicleCardPage() {
                     </option>
                     {[
                       "Total Spent",
-                      "Without Purchase Price",
+                      "Total Expenses",
                       "Repair",
                       "Scheduled Maintenance",
                       "Cosmetic Mods",
                       "Performance Mods",
+                      'Paperwork & Taxes',
                     ].map((label) => (
                       <option key={label} value={label}>
                         {label}
@@ -1836,11 +1857,7 @@ export default function VehicleCardPage() {
                           {/* Title left, price center, icons right */}
                           <div className="flex-1 min-w-0">
                             <button
-                              onClick={() => {
-                                if (r.urls && r.urls.length > 0) {
-                                  setSelectedReceiptUrls(r.urls);
-                                }
-                              }}
+                              onClick={() => openReceipts(r.urls)}
                               className="block w-full text-left text-purple-500 truncate hover:underline hover:text-pink-500"
                               title={r.title}
                             >
@@ -2304,6 +2321,118 @@ export default function VehicleCardPage() {
                 <li>Modifications and upgrades</li>
               </ul>
             </p>
+          </div>
+        </div>
+      )}
+      {/* Pop-up: Display Receipts*/}
+      {selectedReceiptUrls && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
+          {/* Left arrow */}
+          {selectedReceiptUrls.length > 1 && (
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-4xl px-2 py-1 bg-black/40 rounded-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                setReceiptIdx((prev) =>
+                  prev === 0 ? selectedReceiptUrls.length - 1 : prev - 1
+                );
+              }}
+              aria-label="Previous image"
+            >
+              &#8249;
+            </button>
+          )}
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 z-20 text-white text-4xl bg-black/40 rounded-full w-12 h-12 flex items-center justify-center hover:bg-black/60 focus:outline-none"
+            onClick={() => setSelectedReceiptUrls(null)}
+            aria-label="Close"
+            style={{ lineHeight: 1 }}
+          >
+            ×
+          </button>
+          {/* Image or PDF */}
+          <div className="relative w-full h-full flex items-center justify-center">
+            {selectedReceiptUrls[receiptIdx].match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+              <img
+                src={selectedReceiptUrls[receiptIdx]}
+                alt={`Receipt file ${receiptIdx}`}
+                className="object-contain rounded"
+                style={{
+                  maxWidth: "95vw",
+                  maxHeight: "90vh",
+                  width: "auto",
+                  height: "auto",
+                  display: "block",
+                  background: "#fff",
+                  margin: "0 auto"
+                }}
+              />
+            ) : (
+              <iframe
+                src={selectedReceiptUrls[receiptIdx]}
+                title={`Receipt file ${receiptIdx}`}
+                className="w-full h-full"
+                style={{ minHeight: "70vh", background: "#fff" }}
+              />
+            )}
+          </div>
+          {/* Right arrow */}
+          {selectedReceiptUrls.length > 1 && (
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-4xl px-2 py-1 bg-black/40 rounded-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                setReceiptIdx((prev) =>
+                  prev === selectedReceiptUrls.length - 1 ? 0 : prev + 1
+                );
+              }}
+              aria-label="Next image"
+            >
+              &#8250;
+            </button>
+          )}
+        </div>
+      )}
+      {/* Pop-up: Display Admin*/}
+      {selectedAdminDocUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-90">
+          {/* Close button */}
+          <button
+            className="absolute top-4 right-4 z-20 text-white text-4xl bg-black/40 rounded-full w-12 h-12 flex items-center justify-center hover:bg-black/60 focus:outline-none"
+            onClick={() => setSelectedAdminDocUrl(null)}
+            aria-label="Close"
+            style={{ lineHeight: 1 }}
+          >
+            ×
+          </button>
+          {/* Image or PDF */}
+          <div className="relative w-auto h-auto flex items-center justify-center">
+            {selectedAdminDocUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+      <div className="relative flex items-center justify-center w-full max-w-2xl">
+        <img
+          src={selectedAdminDocUrl}
+          alt="Admin Document"
+          className="object-contain rounded"
+          style={{
+            width: "100%",
+            height: "auto",
+            maxHeight: "90vh",
+            display: "block",
+            background: "#fff",
+            margin: "0 auto",
+            objectFit: "contain"
+          }}
+        />
+      </div>
+            ) : (
+              <iframe
+                src={selectedAdminDocUrl}
+                title="Admin Document"
+                className="w-full h-full"
+                style={{ minHeight: "30vh", background: "#fff" }}
+              />
+            )}
           </div>
         </div>
       )}
