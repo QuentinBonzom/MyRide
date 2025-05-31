@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -7,13 +7,16 @@ import {
   ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
 import { CarFront } from "lucide-react";
+import { useRouter } from "next/router";
+import { auth } from "../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const SLIDE_DATA = [
   {
     key: "INTRO",
     title: "WELCOME",
     graphic: "/welcome.png",
-    headline: "MyRideYour all-in-one garage & marketplace.",
+    headline: "MyRide Your all-in-one garage & marketplace.",
     desc: "Your vehicle is one of your most important assets. Unlike other assets, it depreciates. Limiting that depreciation is challenging — even professionals struggle with it. At MyRide, we make it easy for everyone.",
   },
   {
@@ -41,11 +44,25 @@ const SLIDE_DATA = [
 
 export default function WelcomePage() {
   const [currentSlide, setCurrentSlide] = useState(0);
-  const containerRef = useRef(null);
+  const mobileRef = useRef(null);
+  const tabletRef = useRef(null);
+  const router = useRouter();
 
-  const handleScroll = () => {
-    const el = containerRef.current;
-    if (!el) return;
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        router.replace("/myVehicles_page");
+      }
+    });
+    return unsub;
+  }, [router]);
+
+  const handleMobileScroll = (e) => {
+    const el = e.target;
+    setCurrentSlide(Math.round(el.scrollLeft / el.clientWidth));
+  };
+  const handleTabletScroll = (e) => {
+    const el = e.target;
     setCurrentSlide(Math.round(el.scrollLeft / el.clientWidth));
   };
 
@@ -56,7 +73,7 @@ export default function WelcomePage() {
         {/* Overlay sombre */}
         <div className="absolute inset-0 bg-black/50" />
 
-        {/* Barre de progression */}
+        {/* Barre de progression MOBILE */}
         <div className="absolute left-0 right-0 flex px-6 space-x-2 top-6">
           {SLIDE_DATA.map((_, i) => (
             <div
@@ -72,14 +89,13 @@ export default function WelcomePage() {
           {/* Logo */}
           <div className="flex items-center mb-4">
             <Image
-              src="/logoWB.png"
+              src="/logo-MR.png"
               alt="MyRide"
               width={94}
               height={94}
-              className="w-12 h-auto" // Tailwind fixes width, height auto
+              className="h-auto w-60" // Tailwind fixes width, height auto
               style={{ height: "auto" }} // ensure aspect ratio
             />
-            <span className="ml-3 text-2xl font-bold text-white">MyRide</span>
           </div>
           <h1 className="mb-4 text-5xl font-bold text-white">
             Track. Optimize.
@@ -88,8 +104,8 @@ export default function WelcomePage() {
           </h1>
           {/* Carousel */}
           <div
-            ref={containerRef}
-            onScroll={handleScroll}
+            ref={mobileRef}
+            onScroll={handleMobileScroll}
             className="flex flex-1 overflow-x-auto snap-x snap-mandatory no-scrollbar"
             style={{ scrollSnapType: "x mandatory" }}
           >
@@ -130,6 +146,89 @@ export default function WelcomePage() {
         </div>
       </section>
       {/* FIN HOME MOBILE */}
+
+      {/* TABLET ONLY */}
+      <section className="hidden md:flex lg:hidden relative h-screen bg-[url(/fond-mobil.png)] bg-cover bg-center">
+        {/* Overlay sombre */}
+        <div className="absolute inset-0 bg-black/50" />
+
+        {/* Barre de progression TABLET */}
+        <div className="absolute left-0 right-0 flex px-12 space-x-4 top-6">
+          {SLIDE_DATA.map((_, i) => (
+            <div
+              key={i}
+              className={`flex-1 h-1 rounded-2xl transition-colors ${
+                i === currentSlide ? "bg-purple-500" : "bg-gray-700/40"
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="relative z-10 flex flex-col h-full max-w-3xl px-12 pt-20 pb-12 mx-auto">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <Image
+              src="/logo-MR.png"
+              alt="MyRide"
+              width={94}
+              height={94}
+              className="h-auto w-80" // Tailwind fixes width, height auto
+              style={{ height: "auto" }} // ensure aspect ratio
+            />
+            
+          </div>
+
+          <h1 className="mb-8 text-5xl font-bold text-center text-white">
+            Track. Optimize.
+            <br />
+            Sell for more.
+          </h1>
+
+          {/* Carousel */}
+          <div
+            ref={tabletRef}
+            onScroll={handleTabletScroll}
+            className="flex flex-1 space-x-6 overflow-x-auto snap-x snap-mandatory no-scrollbar"
+            style={{ scrollSnapType: "x mandatory" }}
+          >
+            {SLIDE_DATA.map((slide) => {
+              const Icon = {
+                INTRO: CarFront,
+                TRACK: MagnifyingGlassIcon,
+                OPTIMISE: WrenchIcon,
+                SELL: ArrowTrendingUpIcon,
+              }[slide.key];
+              return (
+                <div
+                  key={slide.key}
+                  className="flex flex-col items-center flex-shrink-0 w-full px-4 text-center snap-start"
+                >
+                  <h2 className="px-8 mt-10 mb-4 text-3xl font-semibold text-center text-white uppercase border-b-2 rounded-3xl">
+                    {slide.title}
+                  </h2>
+                  <div className="flex flex-col items-center gap-2 mx-auto mt-2">
+                    <div className="p-8 px-12 rounded-lg bg-zinc-500 bg-opacity-70">
+                      <Icon className="w-8 h-8 mx-auto mb-2 " />
+                      <p className="text-white">{slide.headline}</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-zinc-500 bg-opacity-70">
+                      <p className="text-white ">{slide.desc}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <Link
+            href="/signup_page"
+            className="w-1/2 py-3 mx-auto mt-8 text-3xl font-bold text-center text-white bg-purple-600 rounded-xl"
+          >
+            Get Started
+          </Link>
+        </div>
+      </section>
+      {/* END TABLET */}
     </>
   );
 }

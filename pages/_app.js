@@ -8,7 +8,6 @@ import Head from "next/head";
 // → Import de **tous** tes CSS globaux au même endroit
 import "../styles/globals.css";
 import "../styles/Navbar.css";
-import Footer from "../components/Footer";
 
 import { UserProvider } from "../context/UserContext";
 
@@ -90,7 +89,6 @@ function MyApp({ Component, pageProps }) {
       </Head>
       <Layout>
         <Component {...pageProps} />
-        <Footer />
       </Layout>
     </UserProvider>
   );
