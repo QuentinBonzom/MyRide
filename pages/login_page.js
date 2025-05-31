@@ -14,7 +14,7 @@ const LoginPage = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.replace("/garage_page");
+        router.replace("/myVehicles_page");
       }
     });
     return () => unsubscribe();
