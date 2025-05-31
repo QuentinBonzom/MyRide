@@ -1,8 +1,8 @@
 // next.config.js
 module.exports = {
-  experimental: {
-    appDir: false,
-  },
+ // experimental: {
+  //  appDir: false,
+  //},
   reactStrictMode: true,
   images: {
     remotePatterns: [
