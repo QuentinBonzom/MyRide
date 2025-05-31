@@ -273,7 +273,7 @@ export default function SignUp() {
         },
         { merge: true }
       );
-      router.push("/garage_page");
+      router.push("/myVehicles_page");
     } catch (err) {
       setFormError("Apple sign in failed. Please try again.");
       console.error(err);
