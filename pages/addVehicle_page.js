@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { auth, db, storage } from "../lib/firebase";
 import { doc, setDoc, updateDoc, arrayUnion } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import Image from "next/image";
 
 export default function AddVehiclePage() {
   const router = useRouter();
@@ -36,7 +37,8 @@ export default function AddVehiclePage() {
   // Photos (chaque catégorie)
   const [frontPhotos, setFrontPhotos] = useState([]);
   const [rearPhotos, setRearPhotos] = useState([]);
-  const [sidePhotos, setSidePhotos] = useState([]);
+  const [sideLeftPhotos, setSideLeftPhotos] = useState([]);
+  const [sideRightPhotos, setSideRightPhotos] = useState([]);
   const [interiorPhotos, setInteriorPhotos] = useState([]);
   const [dashboardPhotos, setDashboardPhotos] = useState([]);
   const [engineBayPhotos, setEngineBayPhotos] = useState([]);
@@ -45,6 +47,15 @@ export default function AddVehiclePage() {
   const [marketplace, setMarketplace] = useState(false);
   const [saving, setSaving] = useState(false);
   const [vin, setVin] = useState(""); // VIN input for marketplace
+
+  // Preview states for each photo category
+  const [frontPreview, setFrontPreview] = useState(null);
+  const [rearPreview, setRearPreview] = useState(null);
+  const [sideLeftPreview, setSideLeftPreview] = useState(null);
+  const [sideRightPreview, setSideRightPreview] = useState(null);
+  const [interiorPreview, setInteriorPreview] = useState(null);
+  const [dashboardPreview, setDashboardPreview] = useState(null);
+  const [engineBayPreview, setEngineBayPreview] = useState(null);
 
   // 2. STRUCTURED DATA FOR MAKE / MODEL
   // Extensive list of car and motorcycle brands and their representative models
@@ -1356,8 +1367,11 @@ export default function AddVehiclePage() {
         ...(rearPhotos.length > 0
           ? await uploadCategory(rearPhotos, "rear")
           : []),
-        ...(sidePhotos.length > 0
-          ? await uploadCategory(sidePhotos, "side")
+        ...(sideLeftPhotos.length > 0
+          ? await uploadCategory(sideLeftPhotos, "sideLeft")
+          : []),
+        ...(sideRightPhotos.length > 0
+          ? await uploadCategory(sideRightPhotos, "sideRight")
           : []),
         ...(interiorPhotos.length > 0
           ? await uploadCategory(interiorPhotos, "interior")
@@ -1418,6 +1432,16 @@ Description: ${vehicleData.description}
       alert("An error occurred. Please try again later.");
     }
   };
+
+  // Helper to handle preview
+  function handlePreview(files, setPreview) {
+    if (files && files.length > 0) {
+      const url = URL.createObjectURL(files[0]);
+      setPreview(url);
+    } else {
+      setPreview(null);
+    }
+  }
 
   // 4. STATIC FIELD DEFINITIONS FOR FORM RENDERING
   const basicFields = [
@@ -1691,116 +1715,331 @@ Description: ${vehicleData.description}
 
           {/* Section Photos */}
           <div className="md:col-span-2">
-            <h2 className="mb-2 text-xl font-bold text-gray-300">
+            <h2 className="mb-4 text-xl font-bold text-center text-gray-300">
               Vehicle Photos
             </h2>
-            <div className="grid grid-cols-2 gap-4">
-              {/* Front Photos */}
-              <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium text-gray-300">
+            <div className="grid max-w-md grid-cols-2 gap-6 mx-auto sm:grid-cols-3">
+              {/* 1 */}
+              <div className="flex flex-col items-center p-4 bg-gray-800 shadow-md rounded-xl aspect-square">
+                <label className="mb-2 text-sm font-semibold text-gray-200">
                   Front
                 </label>
                 <input
                   type="file"
                   multiple
-                  onChange={(e) => setFrontPhotos(Array.from(e.target.files))}
-                  className="px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setFrontPhotos(files);
+                    handlePreview(files, setFrontPreview);
+                  }}
+                  className="hidden"
+                  id="photo-front"
                 />
-                <p className="mt-1 text-xs text-gray-300">
-                  Upload multiple front view photos.
+                <label
+                  htmlFor="photo-front"
+                  className="flex flex-col items-center justify-center w-full h-24 overflow-hidden transition border-2 border-gray-500 border-dashed rounded-lg cursor-pointer hover:border-blue-400"
+                >
+                  {frontPreview ? (
+                    <Image
+                      src={frontPreview}
+                      alt="Front preview"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full rounded"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="mb-1 text-3xl text-blue-400">+</span>
+                      <span className="text-xs text-gray-400">Add</span>
+                    </>
+                  )}
+                </label>
+                <p className="mt-2 text-xs text-center text-gray-400">
+                  Front view
                 </p>
               </div>
-
-              {/* Rear Photos */}
-              <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium text-gray-300">
+              {/* 2 */}
+              <div className="flex flex-col items-center p-4 bg-gray-800 shadow-md rounded-xl aspect-square">
+                <label className="mb-2 text-sm font-semibold text-gray-200">
                   Rear
                 </label>
                 <input
                   type="file"
                   multiple
-                  onChange={(e) => setRearPhotos(Array.from(e.target.files))}
-                  className="px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setRearPhotos(files);
+                    handlePreview(files, setRearPreview);
+                  }}
+                  className="hidden"
+                  id="photo-rear"
                 />
-                <p className="mt-1 text-xs text-gray-300">
-                  Upload multiple rear view photos.
+                <label
+                  htmlFor="photo-rear"
+                  className="flex flex-col items-center justify-center w-full h-24 overflow-hidden transition border-2 border-gray-500 border-dashed rounded-lg cursor-pointer hover:border-blue-400"
+                >
+                  {rearPreview ? (
+                    <Image
+                      src={rearPreview}
+                      alt="Rear preview"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full rounded"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="mb-1 text-3xl text-blue-400">+</span>
+                      <span className="text-xs text-gray-400">Add</span>
+                    </>
+                  )}
+                </label>
+                <p className="mt-2 text-xs text-center text-gray-400">
+                  Rear view
                 </p>
               </div>
-
-              {/* Side Photos */}
-              <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium text-gray-300">
-                  Side
+              {/* 3 */}
+              <div className="flex flex-col items-center p-4 bg-gray-800 shadow-md rounded-xl aspect-square">
+                <label className="mb-2 text-sm font-semibold text-gray-200">
+                  Side Left
                 </label>
                 <input
                   type="file"
                   multiple
-                  onChange={(e) => setSidePhotos(Array.from(e.target.files))}
-                  className="px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setSideLeftPhotos(files);
+                    handlePreview(files, setSideLeftPreview);
+                  }}
+                  className="hidden"
+                  id="photo-sideleft"
                 />
-                <p className="mt-1 text-xs text-gray-300">
-                  Upload multiple side view photos.
+                <label
+                  htmlFor="photo-sideleft"
+                  className="flex flex-col items-center justify-center w-full h-24 overflow-hidden transition border-2 border-gray-500 border-dashed rounded-lg cursor-pointer hover:border-blue-400"
+                >
+                  {sideLeftPreview ? (
+                    <Image
+                      src={sideLeftPreview}
+                      alt="Side left preview"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full rounded"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="mb-1 text-3xl text-blue-400">+</span>
+                      <span className="text-xs text-gray-400">Add</span>
+                    </>
+                  )}
+                </label>
+                <p className="mt-2 text-xs text-center text-gray-400">
+                  Left side
                 </p>
               </div>
-
-              {/* Interior Photos */}
-              <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium text-gray-300">
+              {/* 4 */}
+              <div className="flex flex-col items-center p-4 bg-gray-800 shadow-md rounded-xl aspect-square">
+                <label className="mb-2 text-sm font-semibold text-gray-200">
+                  Side Right
+                </label>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setSideRightPhotos(files);
+                    handlePreview(files, setSideRightPreview);
+                  }}
+                  className="hidden"
+                  id="photo-sideright"
+                />
+                <label
+                  htmlFor="photo-sideright"
+                  className="flex flex-col items-center justify-center w-full h-24 overflow-hidden transition border-2 border-gray-500 border-dashed rounded-lg cursor-pointer hover:border-blue-400"
+                >
+                  {sideRightPreview ? (
+                    <Image
+                      src={sideRightPreview}
+                      alt="Side right preview"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full rounded"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="mb-1 text-3xl text-blue-400">+</span>
+                      <span className="text-xs text-gray-400">Add</span>
+                    </>
+                  )}
+                </label>
+                <p className="mt-2 text-xs text-center text-gray-400">
+                  Right side
+                </p>
+              </div>
+              {/* 5 */}
+              <div className="flex flex-col items-center p-4 bg-gray-800 shadow-md rounded-xl aspect-square">
+                <label className="mb-2 text-sm font-semibold text-gray-200">
                   Interior
                 </label>
                 <input
                   type="file"
                   multiple
-                  onChange={(e) =>
-                    setInteriorPhotos(Array.from(e.target.files))
-                  }
-                  className="px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setInteriorPhotos(files);
+                    handlePreview(files, setInteriorPreview);
+                  }}
+                  className="hidden"
+                  id="photo-interior"
                 />
-                <p className="mt-1 text-xs text-gray-300">
-                  Upload multiple interior view photos.
+                <label
+                  htmlFor="photo-interior"
+                  className="flex flex-col items-center justify-center w-full h-24 overflow-hidden transition border-2 border-gray-500 border-dashed rounded-lg cursor-pointer hover:border-blue-400"
+                >
+                  {interiorPreview ? (
+                    <Image
+                      src={interiorPreview}
+                      alt="Interior preview"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full rounded"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="mb-1 text-3xl text-blue-400">+</span>
+                      <span className="text-xs text-gray-400">Add</span>
+                    </>
+                  )}
+                </label>
+                <p className="mt-2 text-xs text-center text-gray-400">
+                  Interior
                 </p>
               </div>
-
-              {/* Dashboard Photos */}
-              <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium text-gray-300">
+              {/* 6 */}
+              <div className="flex flex-col items-center p-4 bg-gray-800 shadow-md rounded-xl aspect-square">
+                <label className="mb-2 text-sm font-semibold text-gray-200">
                   Dashboard
                 </label>
                 <input
                   type="file"
                   multiple
-                  onChange={(e) =>
-                    setDashboardPhotos(Array.from(e.target.files))
-                  }
-                  className="px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setDashboardPhotos(files);
+                    handlePreview(files, setDashboardPreview);
+                  }}
+                  className="hidden"
+                  id="photo-dashboard"
                 />
-                <p className="mt-1 text-xs text-gray-300">
-                  Photos of dashboard & controls.
+                <label
+                  htmlFor="photo-dashboard"
+                  className="flex flex-col items-center justify-center w-full h-24 overflow-hidden transition border-2 border-gray-500 border-dashed rounded-lg cursor-pointer hover:border-blue-400"
+                >
+                  {dashboardPreview ? (
+                    <Image
+                      src={dashboardPreview}
+                      alt="Dashboard preview"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full rounded"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="mb-1 text-3xl text-blue-400">+</span>
+                      <span className="text-xs text-gray-400">Add</span>
+                    </>
+                  )}
+                </label>
+                <p className="mt-2 text-xs text-center text-gray-400">
+                  Dashboard
                 </p>
               </div>
-
-              {/* Engine Bay Photos */}
-              <div className="flex flex-col">
-                <label className="mb-1 text-sm font-medium text-gray-300">
+              {/* 7 */}
+              <div className="flex flex-col items-center col-span-2 p-4 bg-gray-800 shadow-md rounded-xl aspect-square sm:col-span-1">
+                <label className="mb-2 text-sm font-semibold text-gray-200">
                   Engine Bay
                 </label>
                 <input
                   type="file"
                   multiple
-                  onChange={(e) =>
-                    setEngineBayPhotos(Array.from(e.target.files))
-                  }
-                  className="px-4 py-2 text-white bg-gray-700 border border-gray-600 rounded-lg"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files);
+                    setEngineBayPhotos(files);
+                    handlePreview(files, setEngineBayPreview);
+                  }}
+                  className="hidden"
+                  id="photo-enginebay"
                 />
-                <p className="mt-1 text-xs text-gray-300">
-                  Photos of the engine bay.
+                <label
+                  htmlFor="photo-enginebay"
+                  className="flex flex-col items-center justify-center w-full h-24 overflow-hidden transition border-2 border-gray-500 border-dashed rounded-lg cursor-pointer hover:border-blue-400"
+                >
+                  {engineBayPreview ? (
+                    <Image
+                      src={engineBayPreview}
+                      alt="Engine bay preview"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full rounded"
+                      style={{
+                        objectFit: "cover",
+                        width: "100%",
+                        height: "100%",
+                      }}
+                    />
+                  ) : (
+                    <>
+                      <span className="mb-1 text-3xl text-blue-400">+</span>
+                      <span className="text-xs text-gray-400">Add</span>
+                    </>
+                  )}
+                </label>
+                <p className="mt-2 text-xs text-center text-gray-400">
+                  Engine bay
                 </p>
               </div>
             </div>
-            <p className="mt-2 text-xs text-gray-300">
-              Please upload multiple photos in each category to provide a
-              complete view of your vehicle&apos;s condition, especially when
-              listing on the marketplace.
+            <p className="text-xs text-center text-gray-400 ">
+              Please upload multiple photos in each category for a complete view
+              of your vehicle&apos;s condition.
+              <br className="hidden sm:block" />
+              Especially important when listing on the marketplace.
             </p>
           </div>
 

@@ -55,18 +55,17 @@ const DocumentsPage = () => {
   }
 
   return (
-    <section className="flex flex-col min-h-screen px-4 py-6 text-white md:hidden bg-zinc-900">
-      
+    <section className="min-h-screen px-4 py-8 pb-12 mb-12 bg-gray-900">
       {/* Header */}
-      <header className="mb-6 text-center">
-        <h1 className="text-2xl font-bold">Documents</h1>
-        <p className="mt-2 text-gray-400">
-          Téléchargez vos documents essentiels.
+      <header className="mb-8 text-center">
+        <h1 className="text-4xl font-extrabold text-white">Documents</h1>
+        <p className="mt-2 text-lg text-gray-300">
+          Download your essential documents.
         </p>
       </header>
 
-      {/* Cards */}
-      <main className="flex-1 space-y-4 overflow-auto">
+      {/* Cards Container */}
+      <main className="grid gap-8 md:grid-cols-3">
         {["registration", "insurance", "maintenance"].map((type) => {
           const url = documents[type];
           const label =
@@ -77,21 +76,20 @@ const DocumentsPage = () => {
               : "Car Checklist";
           const desc =
             type === "registration"
-              ? "Guide d’achat moto (XLSX)"
+              ? "Motorcycle Buying Guide (XLSX)"
               : type === "insurance"
-              ? "Modèle de facture de vente (PDF)"
-              : "Guide d’achat voiture (XLSX)";
-
+              ? "Bill of Sale Template (PDF)"
+              : "Car Buying Guide (XLSX)";
           return (
             <article
               key={type}
-              className="flex flex-col p-4 bg-white rounded-lg shadow"
+              className="flex flex-col justify-between p-6 bg-gray-800 shadow-lg rounded-xl"
             >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="font-semibold text-gray-800">{label}</h2>
-                  <p className="mt-1 text-sm text-gray-600">{desc}</p>
-                </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-100">{label}</h2>
+                <p className="mt-1 text-sm text-gray-400">{desc}</p>
+              </div>
+              <div className="flex items-center justify-between mt-4">
                 {url ? (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -129,8 +127,8 @@ const DocumentsPage = () => {
                 download={!!url}
                 className={`mt-4 block w-full text-center py-2 rounded-lg font-medium ${
                   url
-                    ? "bg-purple-600 text-white hover:bg-purple-700"
-                    : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    ? "bg-purple-700 text-white hover:bg-purple-800"
+                    : "bg-gray-600 text-gray-400 cursor-not-allowed"
                 }`}
               >
                 {url ? "Download" : "Unavailable"}

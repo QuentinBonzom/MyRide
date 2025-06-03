@@ -41,7 +41,6 @@ import {
   PlusCircle, // added for file upload icon
   Eye, // view icon (owner only)
   Edit,
-  Download, // new download icon
   HelpCircle, // Added for tooltips
   Trash2, // ← nouveau: icône de suppression
 } from "lucide-react";
@@ -603,6 +602,8 @@ export default function VehicleCardPage() {
   const [loading, setLoading] = useState(true);
   const [showEstimatedInfoPopup, setShowEstimatedInfoPopup] = useState(false);
   const [showVariationInfoPopup, setShowVariationInfoPopup] = useState(false);
+  // Add state for receipt popup
+  const [receiptPopup, setReceiptPopup] = useState(null);
 
   // Supprime définitivement Storage + Firestore
   const handleFullDelete = async (receipt) => {
@@ -1400,23 +1401,6 @@ export default function VehicleCardPage() {
     }
   };
 
-  // add helper to download receipt URLs
-  function handleDownloadReceipt(urls) {
-    urls.forEach((url) => {
-      const original = decodeURIComponent(url.split("/").pop().split("?")[0]);
-      const isImage = /\.(jpe?g|png|gif|webp)$/i.test(original);
-      const name = isImage
-        ? original
-        : original.replace(/\.[^/.]+$/, "") + ".pdf";
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = name;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
-  }
-
   // Finance values from AI dataset
   const rawAiData =
     chartData.datasets.find((ds) => ds.label === "AI Estimated")?.data || [];
@@ -1837,9 +1821,8 @@ export default function VehicleCardPage() {
                           <div className="flex-1 min-w-0">
                             <button
                               onClick={() => {
-                                if (r.urls && r.urls.length > 0) {
-                                  setSelectedReceiptUrls(r.urls);
-                                }
+                                // Instead of setSelectedReceiptUrls(r.urls), open popup with summary
+                                setReceiptPopup(r);
                               }}
                               className="block w-full text-left text-purple-500 truncate hover:underline hover:text-pink-500"
                               title={r.title}
@@ -1888,12 +1871,11 @@ export default function VehicleCardPage() {
                             ) : (
                               <button
                                 type="button"
-                                onClick={() => handleDownloadReceipt(r.urls)}
+                                onClick={() => setReceiptPopup(r)}
                                 className="p-1 ml-auto"
-                                disabled={!(r.urls && r.urls.length > 0)}
-                                title="Download receipt"
+                                title="Voir le reçu"
                               >
-                                <Download className="w-6 h-6 text-blue-400 hover:text-blue-500" />
+                                <Eye className="w-6 h-6 text-blue-400 hover:text-blue-500" />
                               </button>
                             )}
                           </div>
@@ -2273,67 +2255,113 @@ export default function VehicleCardPage() {
             </div>{" "}
           </div>{" "}
         </section>{" "}
-        <secton />
+        {/* Pop-up: Estimated value info */}
+        {showEstimatedInfoPopup && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+            onClick={() => setShowEstimatedInfoPopup(false)}
+          >
+            <div
+              className="relative max-w-md p-6 text-white rounded-lg shadow-xl bg-neutral-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-2 right-2 text-neutral-400 hover:text-white"
+                onClick={() => setShowEstimatedInfoPopup(false)}
+              >
+                ×
+              </button>
+              <h4 className="mb-2 text-lg font-semibold">
+                How is the AI estimated value calculated?
+              </h4>
+              <p className="text-sm leading-relaxed">
+                The AI uses:
+                <ul className="mt-2 ml-4 list-disc">
+                  <li>Recent market data</li>
+                  <li>Maintenance history and mileage</li>
+                  <li>Age and depreciation</li>
+                  <li>Local conditions</li>
+                  <li>Modifications and upgrades</li>
+                </ul>
+              </p>
+            </div>
+          </div>
+        )}
+        {/* Pop-up: Variation info */}
+        {showVariationInfoPopup && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+            onClick={() => setShowVariationInfoPopup(false)}
+          >
+            <div
+              className="relative max-w-md p-6 text-white rounded-lg shadow-xl bg-neutral-800"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                className="absolute top-2 right-2 text-neutral-400 hover:text-white"
+                onClick={() => setShowVariationInfoPopup(false)}
+              >
+                ×
+              </button>
+              <h4 className="mb-2 text-lg font-semibold">
+                How is the variation calculated?
+              </h4>
+              <p className="text-sm leading-relaxed ">
+                Variation = ((current value − initial value) / initial value) ×
+                100. Green indicates a positive change; red indicates a negative
+                change.
+              </p>
+            </div>
+          </div>
+        )}
+        {/* Receipt Summary Popup */}
+        {receiptPopup && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
+            <div className="relative w-full max-w-xs p-6 mx-2 bg-white rounded-lg shadow-xl">
+              <button
+                className="absolute text-2xl text-gray-700 top-2 right-2 hover:text-pink-500"
+                onClick={() => setReceiptPopup(null)}
+                title="Close"
+                style={{ background: "none", border: "none" }}
+              >
+                ×
+              </button>
+              <h3 className="mb-2 text-lg font-bold text-purple-700">
+                {receiptPopup.title}
+              </h3>
+              <div className="mb-2 text-sm text-gray-700">
+                <strong>Date:</strong>{" "}
+                {receiptPopup.date
+                  ? new Date(
+                      receiptPopup.date.seconds
+                        ? receiptPopup.date.seconds * 1000
+                        : receiptPopup.date
+                    )
+                      .toISOString()
+                      .split("T")[0]
+                  : "N/A"}
+              </div>
+              <div className="mb-2 text-sm text-gray-700">
+                <strong>Category:</strong> {receiptPopup.category || "N/A"}
+              </div>
+              <div className="mb-2 text-sm text-gray-700">
+                <strong>Mileage:</strong>{" "}
+                {receiptPopup.mileage !== undefined &&
+                receiptPopup.mileage !== null
+                  ? receiptPopup.mileage
+                  : "N/A"}
+              </div>
+              <div className="mb-2 text-sm text-gray-700">
+                <strong>Price:</strong> $
+                {receiptPopup.price?.toFixed(2) || "N/A"}
+              </div>
+              <div className="mt-4 text-xs text-gray-500">
+                For more details, contact the owner or check the documents.
+              </div>
+            </div>
+          </div>
+        )}
       </div>{" "}
-      {/* Pop-up: Estimated value info */}
-      {showEstimatedInfoPopup && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={() => setShowEstimatedInfoPopup(false)}
-        >
-          <div
-            className="relative max-w-md p-6 text-white rounded-lg shadow-xl bg-neutral-800"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="absolute top-2 right-2 text-neutral-400 hover:text-white"
-              onClick={() => setShowEstimatedInfoPopup(false)}
-            >
-              ×
-            </button>
-            <h4 className="mb-2 text-lg font-semibold">
-              How is the AI estimated value calculated?
-            </h4>
-            <p className="text-sm leading-relaxed">
-              The AI uses:
-              <ul className="mt-2 ml-4 list-disc">
-                <li>Recent market data</li>
-                <li>Maintenance history and mileage</li>
-                <li>Age and depreciation</li>
-                <li>Local conditions</li>
-                <li>Modifications and upgrades</li>
-              </ul>
-            </p>
-          </div>
-        </div>
-      )}
-      {/* Pop-up: Variation info */}
-      {showVariationInfoPopup && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-          onClick={() => setShowVariationInfoPopup(false)}
-        >
-          <div
-            className="relative max-w-md p-6 text-white rounded-lg shadow-xl bg-neutral-800"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="absolute top-2 right-2 text-neutral-400 hover:text-white"
-              onClick={() => setShowVariationInfoPopup(false)}
-            >
-              ×
-            </button>
-            <h4 className="mb-2 text-lg font-semibold">
-              How is the variation calculated?
-            </h4>
-            <p className="text-sm leading-relaxed ">
-              Variation = ((current value − initial value) / initial value) ×
-              100. Green indicates a positive change; red indicates a negative
-              change.
-            </p>
-          </div>
-        </div>
-      )}
     </>
   );
 }

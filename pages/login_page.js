@@ -75,6 +75,7 @@ const LoginPage = () => {
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 transition border border-gray-300 shadow-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
             placeholder="Enter your password"
+            autoComplete="current-password" // Ajouté pour aider le navigateur à remplir le champ
           />
         </div>
         <button
@@ -83,6 +84,13 @@ const LoginPage = () => {
         >
           <FaSignInAlt /> Sign In
         </button>
+        {/* Affiche une aide si erreur d'identifiants */}
+        {error === "Invalid email or password. Please try again." && (
+          <p className="mt-2 text-xs text-center text-gray-500">
+            If you recently changed your password, please log out and log in
+            again.
+          </p>
+        )}
         <p className="mt-6 text-sm text-center text-gray-600">
           Don&apos;t have an account?{" "}
           <button

@@ -12,8 +12,6 @@ import {
   HiOutlineDocumentText,
   HiOutlineUserCircle,
 } from "react-icons/hi2";
-import { HiOutlineQuestionMarkCircle } from "react-icons/hi2";
-import { IoLogOutOutline } from "react-icons/io5";
 import { StoreIcon } from "lucide-react";
 
 export default function Navbar() {
@@ -22,12 +20,10 @@ export default function Navbar() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
-  const [showMobile, setShowMobile] = useState(true);
-  const [lastY, setLastY] = useState(0);
 
   const mobileRef = useRef(null);
 
-  // tous les items utilisent maintenant Icon pour faciliter la colorisation
+  // --- Add this back ---
   const items = [
     { label: "Home", Icon: HiOutlineHome, path: "/Welcome_page" },
     { label: "Garage", Icon: StoreIcon, path: "/myVehicles_page" },
@@ -39,18 +35,7 @@ export default function Navbar() {
     { label: "Docs", Icon: HiOutlineDocumentText, path: "/documents_page" },
     { label: "Market", Icon: StoreIcon, path: "/marketplace_page" },
   ];
-
-  // Hide mobile nav on scroll
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentY = window.scrollY;
-      setShowMobile(currentY <= lastY || currentY < 50);
-      setLastY(currentY);
-    };
-
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastY]);
+  // ----------------------
 
   // Close dropdowns on outside click or route change
   useEffect(() => {

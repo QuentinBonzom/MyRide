@@ -52,44 +52,45 @@ export default function MarketplacePage() {
   };
 
   return (
-    <section className="flex flex-col min-h-screen mb-16 bg-zinc-900">
-      {/* header mobile */}
-      <header className="py-4 text-center bg-gray-800">
-        <h1 className="text-3xl font-bold text-white">Marketplace</h1>
+    <section className="min-h-screen pb-12 bg-gray-900">
+      {/* Header repensé en thème sombre */}
+      <header className="py-8 text-center bg-gradient-to-r from-gray-800 to-gray-600">
+        <h1 className="text-4xl font-extrabold text-white">Marketplace</h1>
+        <p className="mt-2 text-lg text-gray-200">Discover your next ride</p>
       </header>
 
-      <main className="flex-grow px-4 py-6 space-y-4 overflow-auto">
+      {/* Main container avec grille aérée en thème sombre */}
+      <main className="grid gap-8 px-6 py-8 md:grid-cols-2">
         {vehicles.map((v) => (
           <article
             key={v.id}
             onClick={() => handleVehicleClick(v.id)}
-            className="overflow-hidden bg-white rounded-lg shadow-lg cursor-pointer"
+            className="overflow-hidden transition transform shadow-xl cursor-pointer bg-neutral-800 rounded-2xl hover:scale-105"
           >
-            {/* image + badge moteur */}
-            <div className="relative h-48">
+            <div className="relative w-full h-64">
               <Image
                 src={v.images[0] || "/default-vehicle.png"}
                 alt={`${v.make} ${v.model}`}
                 fill
                 className="object-cover"
               />
-              <span className="absolute px-2 py-1 text-xs text-white bg-purple-600 rounded top-2 right-2">
+              <span className="absolute px-3 py-1 text-sm text-white bg-purple-700 rounded-xl top-4 right-4">
                 {v.engine}
               </span>
             </div>
-
-            {/* infos */}
-            <div className="p-4">
-              <h2 className="text-lg font-semibold text-gray-800">
+            <div className="p-6">
+              <h2 className="text-2xl font-bold text-gray-100">
                 {v.year} {v.make} {v.model}
               </h2>
-              <p className="mt-1 font-bold text-purple-600">€{v.price}</p>
+              <p className="mt-2 text-xl font-semibold text-purple-400">
+                €{v.price}
+              </p>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   alert("Contact Seller for " + v.model);
                 }}
-                className="w-full py-2 mt-4 font-medium text-white bg-green-600 rounded-lg"
+                className="w-full py-2 mt-4 font-medium text-white bg-green-600 rounded-lg hover:bg-green-700"
               >
                 Contact Seller
               </button>
@@ -97,24 +98,35 @@ export default function MarketplacePage() {
           </article>
         ))}
 
-        {/* skeleton loader */}
-        {!vehicles.length &&
-          Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="h-48 bg-gray-700 rounded-lg animate-pulse"
-            />
-          ))}
+        {/* Loader aéré en thème sombre */}
+        {!vehicles.length && (
+          <div className="flex items-center justify-center h-64">
+            <div className="flex space-x-3">
+              <div
+                className="w-4 h-4 bg-purple-500 rounded-full animate-bounce"
+                style={{ animationDelay: "0s" }}
+              />
+              <div
+                className="w-4 h-4 bg-purple-500 rounded-full animate-bounce"
+                style={{ animationDelay: "0.2s" }}
+              />
+              <div
+                className="w-4 h-4 bg-purple-500 rounded-full animate-bounce"
+                style={{ animationDelay: "0.4s" }}
+              />
+            </div>
+          </div>
+        )}
       </main>
 
-      {/* Auth Popup */}
+      {/* Auth Popup en thème sombre */}
       {showAuthPopup && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-          <div className="w-full max-w-sm p-8 bg-white rounded-lg shadow-xl">
-            <h2 className="mb-4 text-2xl font-bold text-center text-gray-800">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
+          <div className="w-full max-w-sm p-8 rounded-lg shadow-xl bg-neutral-800">
+            <h2 className="mb-4 text-2xl font-bold text-center text-white">
               Sign In or Sign Up
             </h2>
-            <p className="mb-6 text-center text-gray-600">
+            <p className="mb-6 text-center text-gray-300">
               You need to be logged in to view the details of this listing.
             </p>
             <div className="flex justify-center space-x-4">
@@ -133,7 +145,7 @@ export default function MarketplacePage() {
             </div>
             <button
               onClick={() => setShowAuthPopup(false)}
-              className="w-full mt-6 text-sm text-center text-gray-500 hover:underline"
+              className="w-full mt-6 text-sm text-center text-gray-400 hover:underline"
             >
               Cancel
             </button>

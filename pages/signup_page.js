@@ -2,26 +2,32 @@ import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { auth, db, storage } from "../lib/firebase";
-import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail, signInWithPopup, OAuthProvider } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  fetchSignInMethodsForEmail,
+  signInWithPopup,
+  OAuthProvider,
+} from "firebase/auth";
 import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import Cropper from "react-easy-crop";
 import anonymousPng from "../public/anonymous.png"; // Make sure this file exists
+import Image from "next/image";
 
 export default function SignUp() {
   // ────────────────────────────────────────────────────────────────────────────────
   // State hooks
   // ────────────────────────────────────────────────────────────────────────────────
-  const [firstName, setFirstName] = useState("");    // First Name / Prénom
-  const [lastName, setLastName] = useState("");      // Last Name / Nom
-  const [middleName, setMiddleName] = useState("");  // Middle Name / Deuxième prénom
-  const [email, setEmail] = useState("");            // Email address / Adresse e-mail
-  const [password, setPassword] = useState("");      // Password / Mot de passe
-  const [image, setImage] = useState(null);          // Profile image file / Fichier image
-  const [loading, setLoading] = useState(false);     // Loading indicator / Indicateur de chargement
-  const [errors, setErrors] = useState({});          // Field errors / Erreurs des champs
-  const [formError, setFormError] = useState("");    // Form-level error / Erreur générale du formulaire
-  const [step, setStep] = useState(1);                // Current step in the sign-up process
+  const [firstName, setFirstName] = useState(""); // First Name / Prénom
+  const [lastName, setLastName] = useState(""); // Last Name / Nom
+  const [middleName, setMiddleName] = useState(""); // Middle Name / Deuxième prénom
+  const [email, setEmail] = useState(""); // Email address / Adresse e-mail
+  const [password, setPassword] = useState(""); // Password / Mot de passe
+  const [image, setImage] = useState(null); // Profile image file / Fichier image
+  const [loading, setLoading] = useState(false); // Loading indicator / Indicateur de chargement
+  const [errors, setErrors] = useState({}); // Field errors / Erreurs des champs
+  const [formError, setFormError] = useState(""); // Form-level error / Erreur générale du formulaire
+  const [step, setStep] = useState(1); // Current step in the sign-up process
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState("");
   const [authMethod, setAuthMethod] = useState(null); // "email" or "apple"
@@ -101,7 +107,10 @@ export default function SignUp() {
     if (!image || !croppedAreaPixels) return;
     const reader = new FileReader();
     reader.onload = async (e) => {
-      const croppedBlob = await getCroppedImg(e.target.result, croppedAreaPixels);
+      const croppedBlob = await getCroppedImg(
+        e.target.result,
+        croppedAreaPixels
+      );
       setCroppedImage(URL.createObjectURL(croppedBlob));
       setImage(new File([croppedBlob], image.name, { type: "image/png" }));
       setCropping(false);
@@ -186,7 +195,11 @@ export default function SignUp() {
     setFormError("");
     try {
       // Create user account
-      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      const { user } = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
 
       // Send welcome email via backend API
       await fetch("/api/send-welcome-email", {
@@ -197,18 +210,16 @@ export default function SignUp() {
 
       let profileImageUrl = "/profile_icon.png";
       if (image) {
-        const storageRef = ref(storage, `members/${user.uid}/profilepicture.png`);
+        const storageRef = ref(
+          storage,
+          `members/${user.uid}/profilepicture.png`
+        );
         const uploadTask = uploadBytesResumable(storageRef, image);
         await new Promise((res, rej) =>
-          uploadTask.on(
-            "state_changed",
-            null,
-            rej,
-            async () => {
-              profileImageUrl = await getDownloadURL(uploadTask.snapshot.ref);
-              res();
-            }
-          )
+          uploadTask.on("state_changed", null, rej, async () => {
+            profileImageUrl = await getDownloadURL(uploadTask.snapshot.ref);
+            res();
+          })
         );
       }
       await setDoc(doc(db, "members", user.uid), {
@@ -236,26 +247,32 @@ export default function SignUp() {
     setLoading(true);
     setFormError("");
     try {
-      const provider = new OAuthProvider('apple.com');
+      const provider = new OAuthProvider("apple.com");
       // Optionally, you can add scopes: provider.addScope('email');
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       // Check if user profile exists in Firestore
       const userDoc = await doc(db, "members", user.uid);
       // If not, create a minimal profile (you can expand this logic as needed)
-      await setDoc(userDoc, {
-        firstName: user.displayName ? user.displayName.split(" ")[0] : "",
-        lastName: user.displayName ? user.displayName.split(" ").slice(1).join(" ") : "",
-        middleName: "",
-        dob: "",
-        email: user.email,
-        inviter: "frenchy",
-        rating: 5,
-        vehicles: [],
-        profileImage: user.photoURL || "/profile_icon.png",
-        createdAt: new Date(),
-        appleProvider: true,
-      }, { merge: true });
+      await setDoc(
+        userDoc,
+        {
+          firstName: user.displayName ? user.displayName.split(" ")[0] : "",
+          lastName: user.displayName
+            ? user.displayName.split(" ").slice(1).join(" ")
+            : "",
+          middleName: "",
+          dob: "",
+          email: user.email,
+          inviter: "frenchy",
+          rating: 5,
+          vehicles: [],
+          profileImage: user.photoURL || "/profile_icon.png",
+          createdAt: new Date(),
+          appleProvider: true,
+        },
+        { merge: true }
+      );
       router.push("/myVehicles_page");
     } catch (err) {
       setFormError("Apple sign in failed. Please try again.");
@@ -280,9 +297,12 @@ export default function SignUp() {
       // Query all members and check for email match (case-insensitive)
       const membersSnap = await getDocs(collection(db, "members"));
       let found = false;
-      membersSnap.forEach(docSnap => {
+      membersSnap.forEach((docSnap) => {
         const data = docSnap.data();
-        if (data.email && data.email.trim().toLowerCase() === email.trim().toLowerCase()) {
+        if (
+          data.email &&
+          data.email.trim().toLowerCase() === email.trim().toLowerCase()
+        ) {
           found = true;
         }
       });
@@ -308,7 +328,7 @@ export default function SignUp() {
         {step === 3 && (
           <div className="flex flex-col items-center justify-center w-1/3 p-4 border-r border-gray-200">
             <div className="relative w-32 h-32 overflow-hidden bg-gray-100 rounded-full shadow-lg">
-              <img
+              <Image
                 src={
                   croppedImage
                     ? croppedImage
@@ -317,7 +337,9 @@ export default function SignUp() {
                     : anonymousPng.src || "/anonymous.png"
                 }
                 alt="Profile Preview"
-                className="object-cover w-full h-full"
+                width={128}
+                height={128}
+                style={{ objectFit: "cover" }}
               />
               {/* Cropping Modal */}
               {cropping && (
@@ -353,7 +375,7 @@ export default function SignUp() {
               )}
             </div>
             <div className="mt-4 text-xs text-center text-gray-500">
-               Preview
+              Preview
             </div>
           </div>
         )}
@@ -378,11 +400,11 @@ export default function SignUp() {
               </div>
             </div>
           </div>
-      
+
           <h2 className="mt-6 mb-6 text-2xl font-semibold text-center text-black">
             Create an Account
           </h2>
-      
+
           {formError && (
             <p className="mb-4 text-center text-red-500">{formError}</p>
           )}
@@ -390,7 +412,9 @@ export default function SignUp() {
           {/* Step 0: Choose authentication method */}
           {authMethod === null && (
             <div className="flex flex-col gap-6">
-              <h2 className="mb-4 text-2xl font-semibold text-center text-black">Sign Up</h2>
+              <h2 className="mb-4 text-2xl font-semibold text-center text-black">
+                Sign Up
+              </h2>
               <button
                 onClick={() => setAuthMethod("email")}
                 className="w-full py-3 font-bold text-white rounded-lg bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800"
@@ -402,14 +426,23 @@ export default function SignUp() {
                 className="flex items-center justify-center w-full gap-2 py-3 font-bold text-black bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
                 disabled={loading}
               >
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24" className="text-black">
-                  <path d="M16.5 2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm4.3 6.1c-.1-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.7 1 1.5 2.1 2.6 2.1 1 0 1.3-.7 2.6-.7s1.6.7 2.6.7c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0-.1-2.1-.8-2.1-3.2zm-4.2-6.1c.1-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z"/>
+                <svg
+                  width="20"
+                  height="20"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  className="text-black"
+                >
+                  <path d="M16.5 2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm4.3 6.1c-.1-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.7 1 1.5 2.1 2.6 2.1 1 0 1.3-.7 2.6-.7s1.6.7 2.6.7c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0-.1-2.1-.8-2.1-3.2zm-4.2-6.1c.1-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z" />
                 </svg>
                 Continue with Apple
               </button>
               <p className="mt-4 text-sm text-center text-gray-500">
                 Already have an account?{" "}
-                <Link href="/login_page" className="font-semibold text-purple-600 hover:underline">
+                <Link
+                  href="/login_page"
+                  className="font-semibold text-purple-600 hover:underline"
+                >
                   Sign In
                 </Link>
               </p>
@@ -422,7 +455,9 @@ export default function SignUp() {
               {step === 1 && (
                 <>
                   <div>
-                    <label className="block mb-1 text-black">First Name *</label>
+                    <label className="block mb-1 text-black">
+                      First Name *
+                    </label>
                     <input
                       type="text"
                       value={firstName}
@@ -481,7 +516,15 @@ export default function SignUp() {
                       className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                     />
                     {emailCheckMsg && (
-                      <p className={`text-sm ${emailCheckMsg.includes("available") ? "text-green-600" : "text-red-500"}`}>{emailCheckMsg}</p>
+                      <p
+                        className={`text-sm ${
+                          emailCheckMsg.includes("available")
+                            ? "text-green-600"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {emailCheckMsg}
+                      </p>
                     )}
                     {errors.email && (
                       <p className="text-sm text-red-500">{errors.email}</p>
@@ -498,7 +541,9 @@ export default function SignUp() {
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
-                          setPasswordStrength(checkPasswordStrength(e.target.value));
+                          setPasswordStrength(
+                            checkPasswordStrength(e.target.value)
+                          );
                         }}
                         className="w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
@@ -510,13 +555,35 @@ export default function SignUp() {
                       >
                         {showPassword ? (
                           // Eye-off SVG
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-9-7s4-7 9-7c1.657 0 3.216.41 4.563 1.125M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.364 6.364L4.222 4.222" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13.875 18.825A10.05 10.05 0 0112 19c-5 0-9-4-9-7s4-7 9-7c1.657 0 3.216.41 4.563 1.125M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.364 6.364L4.222 4.222"
+                            />
                           </svg>
                         ) : (
                           // Eye SVG
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c0 3-4 7-9 7s-9-4-9-7 4-7 9-7 9 4 9 7z" />
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6 0c0 3-4 7-9 7s-9-4-9-7 4-7 9-7 9 4 9 7z"
+                            />
                           </svg>
                         )}
                       </button>
@@ -525,7 +592,13 @@ export default function SignUp() {
                       <p className="text-sm text-red-500">{errors.password}</p>
                     )}
                     {password && (
-                      <p className={`text-sm ${passwordStrength === "Strong" ? "text-green-600" : "text-orange-500"}`}>
+                      <p
+                        className={`text-sm ${
+                          passwordStrength === "Strong"
+                            ? "text-green-600"
+                            : "text-orange-500"
+                        }`}
+                      >
                         Password strength: {passwordStrength}
                       </p>
                     )}
@@ -560,7 +633,9 @@ export default function SignUp() {
                   <div>
                     <label className="block mb-1 text-black">
                       Profile Picture{" "}
-                      <span className="text-xs text-gray-500">(jpg, png | max. 2 MB)</span>
+                      <span className="text-xs text-gray-500">
+                        (jpg, png | max. 2 MB)
+                      </span>
                     </label>
                     <input
                       ref={fileInputRef}
