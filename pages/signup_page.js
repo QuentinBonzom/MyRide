@@ -11,7 +11,7 @@ import {
 import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import Cropper from "react-easy-crop";
-import anonymousPng from "../public/anonymous.png"; // Make sure this file exists
+import anonymousPng from "../public/anonymous.png";
 import Image from "next/image";
 
 export default function SignUp() {
@@ -334,12 +334,12 @@ export default function SignUp() {
                     ? croppedImage
                     : image
                     ? URL.createObjectURL(image)
-                    : anonymousPng.src || "/anonymous.png"
+                    : anonymousPng.src
                 }
                 alt="Profile Preview"
-                width={128}
-                height={128}
-                style={{ objectFit: "cover" }}
+                layout="fill"
+                objectFit="cover"
+                className="rounded-full"
               />
               {/* Cropping Modal */}
               {cropping && (

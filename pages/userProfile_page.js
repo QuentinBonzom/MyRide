@@ -197,7 +197,7 @@ export default function UserProfilePage() {
       )}
 
       {/* Contenu principal de la page */}
-      <div className="min-h-screen px-6 mb-5 text-gray-100 bg-gray-800">
+      <div className="min-h-screen px-6 mb-16 text-gray-100 bg-gray-800 md:mb-5">
         <h1 className="pt-5 mb-2 text-5xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-indigo-700">
           My Profile
         </h1>
