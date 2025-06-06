@@ -421,7 +421,7 @@ export default function SignUp() {
               >
                 Continue with Email
               </button>
-              <button
+              {/* <button
                 onClick={handleAppleSignIn}
                 className="flex items-center justify-center w-full gap-2 py-3 font-bold text-black bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
                 disabled={loading}
@@ -436,7 +436,7 @@ export default function SignUp() {
                   <path d="M16.5 2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm4.3 6.1c-.1-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.7 1 1.5 2.1 2.6 2.1 1 0 1.3-.7 2.6-.7s1.6.7 2.6.7c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0-.1-2.1-.8-2.1-3.2zm-4.2-6.1c.1-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z" />
                 </svg>
                 Continue with Apple
-              </button>
+              </button> */}
               <p className="mt-4 text-sm text-center text-gray-500">
                 Already have an account?{" "}
                 <Link
