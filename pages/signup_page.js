@@ -5,8 +5,8 @@ import { auth, db, storage } from "../lib/firebase";
 import {
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
-  signInWithPopup,
-  OAuthProvider,
+  // signInWithPopup,
+  // OAuthProvider,
 } from "firebase/auth";
 import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
