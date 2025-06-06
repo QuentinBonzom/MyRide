@@ -243,44 +243,44 @@ export default function SignUp() {
   };
 
   // Apple sign in handler
-  const handleAppleSignIn = async () => {
-    setLoading(true);
-    setFormError("");
-    try {
-      const provider = new OAuthProvider("apple.com");
-      // Optionally, you can add scopes: provider.addScope('email');
-      const result = await signInWithPopup(auth, provider);
-      const user = result.user;
-      // Check if user profile exists in Firestore
-      const userDoc = await doc(db, "members", user.uid);
-      // If not, create a minimal profile (you can expand this logic as needed)
-      await setDoc(
-        userDoc,
-        {
-          firstName: user.displayName ? user.displayName.split(" ")[0] : "",
-          lastName: user.displayName
-            ? user.displayName.split(" ").slice(1).join(" ")
-            : "",
-          middleName: "",
-          dob: "",
-          email: user.email,
-          inviter: "frenchy",
-          rating: 5,
-          vehicles: [],
-          profileImage: user.photoURL || "/profile_icon.png",
-          createdAt: new Date(),
-          appleProvider: true,
-        },
-        { merge: true }
-      );
-      router.push("/myVehicles_page");
-    } catch (err) {
-      setFormError("Apple sign in failed. Please try again.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // const handleAppleSignIn = async () => {
+  //   setLoading(true);
+  //   setFormError("");
+  //   try {
+  //     const provider = new OAuthProvider("apple.com");
+  //     // Optionally, you can add scopes: provider.addScope('email');
+  //     const result = await signInWithPopup(auth, provider);
+  //     const user = result.user;
+  //     // Check if user profile exists in Firestore
+  //     const userDoc = await doc(db, "members", user.uid);
+  //     // If not, create a minimal profile (you can expand this logic as needed)
+  //     await setDoc(
+  //       userDoc,
+  //       {
+  //         firstName: user.displayName ? user.displayName.split(" ")[0] : "",
+  //         lastName: user.displayName
+  //           ? user.displayName.split(" ").slice(1).join(" ")
+  //           : "",
+  //         middleName: "",
+  //         dob: "",
+  //         email: user.email,
+  //         inviter: "frenchy",
+  //         rating: 5,
+  //         vehicles: [],
+  //         profileImage: user.photoURL || "/profile_icon.png",
+  //         createdAt: new Date(),
+  //         appleProvider: true,
+  //       },
+  //       { merge: true }
+  //     );
+  //     router.push("/myVehicles_page");
+  //   } catch (err) {
+  //     setFormError("Apple sign in failed. Please try again.");
+  //     console.error(err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Email field blur handler to check if email is already used (Firestore members collection)
   const handleEmailBlur = async () => {
