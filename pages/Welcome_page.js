@@ -48,14 +48,18 @@ export default function WelcomePage() {
   const tabletRef = useRef(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        router.replace("/myVehicles_page");
-      }
-    });
-    return unsub;
-  }, [router]);
+  const redirectedRef = useRef(false);
+
+useEffect(() => {
+  const unsub = onAuthStateChanged(auth, (user) => {
+    if (user && !redirectedRef.current) {
+      redirectedRef.current = true;
+      router.replace("/myVehicles_page");
+    }
+  });
+
+  return () => unsub();
+}, [router]);
 
   const handleMobileScroll = (e) => {
     const el = e.target;
@@ -85,9 +89,9 @@ export default function WelcomePage() {
           ))}
         </div>
 
-        <div className="relative z-10 flex flex-col h-full px-6 pt-16 pb-8">
+        <div className="relative z-10 flex flex-col h-full px-6 pb-8 pt-14">
           {/* Logo */}
-          <div className="flex items-center mb-4">
+          <div className="flex items-center mb-2">
             <Image
               src="/logo-MR.png"
               alt="MyRide"
@@ -97,7 +101,7 @@ export default function WelcomePage() {
               style={{ height: "auto" }} // ensure aspect ratio
             />
           </div>
-          <h1 className="mb-4 text-5xl font-bold text-white">
+          <h1 className="mb-2 text-3xl font-bold white md:text-5xl">
             Track. Optimize.
             <br />
             Sell for more.
@@ -121,7 +125,7 @@ export default function WelcomePage() {
                   key={slide.key}
                   className="flex flex-col items-center flex-shrink-0 w-full px-4 text-center snap-start"
                 >
-                  <h2 className="w-full mt-10 mb-4 text-3xl font-semibold text-center text-white uppercase border-b-2 rounded-3xl">
+                  <h2 className="w-full mt-6 mb-4 text-3xl font-semibold text-center text-white uppercase border-b-2 rounded-3xl">
                     {slide.title}
                   </h2>
                   <div className="flex flex-col items-center gap-2 mx-auto mt-2">
@@ -139,7 +143,7 @@ export default function WelcomePage() {
           </div>
           <Link
             href="/signup_page"
-            className="absolute inset-x-0 w-3/4 py-3 mx-auto text-center text-white bg-purple-600 rounded-xl bottom-16"
+            className="absolute inset-x-0 w-3/4 py-3 mx-auto text-2xl font-bold text-center text-white bg-purple-600 rounded-xl bottom-12"
           >
             Get Started
           </Link>
@@ -222,7 +226,7 @@ export default function WelcomePage() {
 
           <Link
             href="/signup_page"
-            className="w-1/2 py-3 mx-auto mt-8 text-3xl font-bold text-center text-white bg-purple-600 rounded-xl"
+            className="w-1/2 py-6 mx-auto mt-8 mb-8 text-4xl font-bold text-center text-white bg-purple-600 rounded-xl"
           >
             Get Started
           </Link>

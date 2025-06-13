@@ -12,6 +12,8 @@ import {
   HiOutlineDocumentText,
   HiOutlineUserCircle,
 } from "react-icons/hi2";
+import { MdGarage } from "react-icons/md";
+
 import { StoreIcon } from "lucide-react";
 
 export default function Navbar() {
@@ -26,7 +28,7 @@ export default function Navbar() {
   // --- Add this back ---
   const items = [
     { label: "Home", Icon: HiOutlineHome, path: "/Welcome_page" },
-    { label: "Garage", Icon: StoreIcon, path: "/myVehicles_page" },
+    { label: "Garage", Icon: MdGarage, path: "/myVehicles_page" },
     {
       label: "Chat",
       Icon: HiOutlineChatBubbleLeftRight,
@@ -82,7 +84,7 @@ export default function Navbar() {
     <>
       {/* MOBILE NAVBAR ONLY */}
       {currentUser && router.pathname !== "/Welcome_page" && (
-        <nav className="fixed bottom-0 z-50 flex justify-around w-full py-2 bg-gray-900">
+        <nav className="fixed bottom-0 z-50 flex justify-around w-full py-2 bg-gray-900 pb-7">
           {/* Parcourez `items` et affichez Icon+label */}
           {items
             .filter(
@@ -99,7 +101,7 @@ export default function Navbar() {
                   className="flex flex-col items-center"
                 >
                   <Icon
-                    className={`w-6 h-6 ${
+                    className={`w-5 h-5 ${
                       active ? "text-white" : "text-purple-500"
                     }`}
                   />

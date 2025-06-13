@@ -306,6 +306,7 @@ export default function MyGarage() {
             </motion.div>
           </div>
         )}
+
         <motion.h1
           className="pb-4 mb-2 text-5xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500"
           initial={{ y: -30, opacity: 0 }}
@@ -339,7 +340,7 @@ export default function MyGarage() {
                 </svg>
               </button>
               {dropdownOpen && (
-                <div className="absolute z-20 w-56 mt-2 text-sm bg-white border border-gray-200 rounded-md shadow-lg -right-4 md:left-0">
+                <div className="absolute left-0 z-20 w-56 mt-2 text-sm bg-white border border-gray-200 rounded-md shadow-lg">
                   {sumOptions.map((option) => (
                     <button
                       key={option}
@@ -371,60 +372,20 @@ export default function MyGarage() {
           {isAuthenticated ? (
             <>
               {vehicles.map((veh) => {
-                // Correction: Utilise les champs renseignés lors de l'ajout du véhicule
-                const maintenanceItems = [
-                  {
-                    label: "Without Purchase Price",
-                    value:
-                      Number(veh.withoutPurchasePrice) +
-                      veh.receipts.reduce(
-                        (sum, r) => sum + (Number(r.price) || 0),
-                        0
-                      ),
-                  },
-                  {
-                    label: "Repair",
-                    value:
-                      Number(veh.repairCost) +
-                      veh.receipts
-                        .filter((r) => r.category === "Repair")
-                        .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                  },
-                  {
-                    label: "Scheduled Maintenance",
-                    value:
-                      Number(veh.scheduledMaintenance) +
-                      veh.receipts
-                        .filter((r) => r.category === "Scheduled Maintenance")
-                        .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                  },
-                  {
-                    label: "Cosmetic Mods",
-                    value:
-                      Number(veh.cosmeticMods) +
-                      veh.receipts
-                        .filter((r) => r.category === "Cosmetic Mods")
-                        .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                  },
-                  {
-                    label: "Performance Mods",
-                    value:
-                      Number(veh.performanceMods) +
-                      veh.receipts
-                        .filter((r) => r.category === "Performance Mods")
-                        .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                  },
-                ];
+                // Calculate expenses by category from receipts
+                const getCategoryTotal = (cat) =>
+                  veh.receipts
+                    .filter((r) => r.category === cat)
+                    .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
 
-                // Correction: Total Spent = purchase price + tous les coûts maintenance + tous les reçus
+                const receiptsTotal = veh.receipts.reduce(
+                  (sum, r) => sum + (Number(r.price) || 0),
+                  0
+                );
+
+                // Total Spent = purchase price + all receipts
                 const totalCost =
-                  (Number(veh.boughtAt) || 0) +
-                  Number(veh.withoutPurchasePrice) +
-                  Number(veh.repairCost) +
-                  Number(veh.scheduledMaintenance) +
-                  Number(veh.cosmeticMods) +
-                  Number(veh.performanceMods) +
-                  veh.receipts.reduce((s, r) => s + (Number(r.price) || 0), 0);
+                  (Number(veh.boughtAt) || 0) + receiptsTotal;
 
                 return (
                   <motion.div
@@ -466,25 +427,58 @@ export default function MyGarage() {
                         </p>
                       </div>
                       <div className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
-                        <h4 className="mb-1 font-semibold">Maintenance</h4>
-                        {maintenanceItems.map((it) => {
-                          const val = Number(it.value) || 0;
-                          return (
-                            <div
-                              key={it.label}
-                              className="flex justify-between"
-                            >
-                              <span>{it.label}:</span>
-                              <span>${val.toFixed(2)}</span>
-                            </div>
-                          );
-                        })}
+                        <h4 className="mb-1 font-semibold">Expenses</h4>
+                        {/* Purchase price line */}
+                        <div className="flex justify-between">
+                          <span>Purchase price:</span>
+                          <span>${Number(veh.boughtAt || 0).toFixed(2)}</span>
+                        </div>
+                        {/* Repair */}
+                        <div className="flex justify-between">
+                          <span>Repair:</span>
+                          <span>
+                            ${getCategoryTotal('Repair').toFixed(2)}
+                          </span>
+                        </div>
+                        {/* Scheduled Maintenance */}
+                        <div className="flex justify-between">
+                          <span>Scheduled Maintenance:</span>
+                          <span>
+                            ${getCategoryTotal('Scheduled Maintenance').toFixed(2)}
+                          </span>
+                        </div>
+                        {/* Cosmetic Mods */}
+                        <div className="flex justify-between">
+                          <span>Cosmetic Mods:</span>
+                          <span>
+                            ${getCategoryTotal('Cosmetic Mods').toFixed(2)}
+                          </span>
+                        </div>
+                        {/* Performance Mods */}
+                        <div className="flex justify-between">
+                          <span>Performance Mods:</span>
+                          <span>
+                            ${getCategoryTotal('Performance Mods').toFixed(2)}
+                          </span>
+                        </div>
+                        {/* Paperwork & Taxes */}
+                        <div className="flex justify-between">
+                          <span>Paperwork & Taxes:</span>
+                          <span>
+                            ${getCategoryTotal('Paperwork & Taxes').toFixed(2)}
+                          </span>
+                        </div>
+                                                {/* Total expenses (italic) */}
+                        <div className="flex justify-between italic">
+                          <span>Total expenses:</span>
+                          <span>${receiptsTotal.toFixed(2)}</span>
+                        </div>
+                        {/* Total Spent */}
                         <div className="flex justify-between mt-2 font-semibold text-purple-400">
                           <span>Total Spent:</span>
-                          <span>${Number(totalCost).toFixed(2)}</span>
+                          <span>${totalCost.toFixed(2)}</span>
                         </div>
                       </div>
-
                       <div className="flex flex-col gap-2 mt-4 md:flex-row md:justify-between">
                         <button
                           onClick={(e) => {
