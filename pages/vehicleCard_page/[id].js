@@ -405,6 +405,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
           <option>Scheduled Maintenance</option>
           <option>Cosmetic Mods</option>
           <option>Performance Mods</option>
+          <option>Paperwork & Taxes</option>
         </select>
         <input
           placeholder="Mileage"
@@ -484,8 +485,6 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
             )}
           </div>
         )}
-
-        {/* Full preview modal */}
         {previewUrl && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
             <div className="relative flex flex-col items-center w-full max-w-2xl p-4 bg-white rounded-lg shadow-xl">
@@ -498,14 +497,20 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                 ×
               </button>
               {previewUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <Image
-                  src={previewUrl}
-                  alt="Full preview"
-                  layout="responsive"
-                  width={1000}
-                  height={700}
-                  className="object-contain"
-                />
+                <div className="flex items-center justify-center w-full">
+                  <Image
+                    src={previewUrl}
+                    alt="Full preview"
+                    width={800}
+                    height={600}
+                    style={{
+                      maxHeight: "75vh",
+                      maxWidth: "100%",
+                      objectFit: "contain",
+                      background: "#fff"
+                    }}
+                  />
+                </div>
               ) : (
                 <iframe
                   src={previewUrl}
@@ -549,6 +554,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
 // ReceiptDetailModal: new component for showing receipt details in a popup
 function ReceiptDetailModal({ receipt, onClose, aiAnswer }) {
   if (!receipt) return null;
+  // On ne gère plus les liens produits, juste la recommandation texte
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
       <div className="relative w-full max-w-lg p-6 border shadow-2xl bg-neutral-900 border-neutral-700 rounded-xl">
@@ -597,17 +603,13 @@ function ReceiptDetailModal({ receipt, onClose, aiAnswer }) {
             ${Number(receipt.price).toFixed(2)}
           </span>
         </div>
-        {/* AI summary */}
+        {/* AI summary + suggestion produit */}
         {aiAnswer && (
-          <div className="p-3 mt-4 text-sm border rounded bg-neutral-800 border-neutral-700 text-neutral-200">
+          <div className="p-3 mt-4 overflow-y-auto text-sm border rounded bg-neutral-800 border-neutral-700 text-neutral-200 max-h-72">
             <span className="block mb-1 font-semibold text-purple-400">
               AI Summary:
             </span>
-            <span>
-              {aiAnswer.length > 200
-                ? aiAnswer.slice(0, 200) + "..."
-                : aiAnswer}
-            </span>
+            <span>{aiAnswer}</span>
           </div>
         )}
       </div>
@@ -705,7 +707,7 @@ export default function VehicleCardPage() {
   // Ajout de l'état manquant pour les maintenance records
   const [, setLoadingMaintenanceRec] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   // Add state for receipt popup
   const [receiptPopup, setReceiptPopup] = useState(null);
   const [receiptAiAnswer, setReceiptAiAnswer] = useState(""); // Ajout pour l'IA
@@ -1493,28 +1495,47 @@ export default function VehicleCardPage() {
       0
     );
     const purchase = Number(vehicle?.boughtAt) || 0;
+    // initial input costs
+    const initRepair = Number(vehicle?.repairCost) || 0;
+    const initScheduled = Number(vehicle?.scheduledMaintenance) || 0;
+    const initCosmetic = Number(vehicle?.cosmeticMods) || 0;
+    const initPerformance = Number(vehicle?.performanceMods) || 0;
+    const initCosts =
+      initRepair + initScheduled + initCosmetic + initPerformance;
 
     switch (label) {
       case "Total Spent":
-        return purchase + receiptsTotal;
+        return purchase + initCosts + receiptsTotal;
       case "Total Expenses":
-        return receiptsTotal;
+        return initCosts + receiptsTotal;
       case "Repair":
-        return receipts
-          .filter((r) => r.category === "Repair")
-          .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+        return (
+          initRepair +
+          receipts
+            .filter((r) => r.category === "Repair")
+            .reduce((sum, r) => sum + (Number(r.price) || 0), 0)
+        );
       case "Scheduled Maintenance":
-        return receipts
-          .filter((r) => r.category === "Scheduled Maintenance")
-          .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+        return (
+          initScheduled +
+          receipts
+            .filter((r) => r.category === "Scheduled Maintenance")
+            .reduce((sum, r) => sum + (Number(r.price) || 0), 0)
+        );
       case "Cosmetic Mods":
-        return receipts
-          .filter((r) => r.category === "Cosmetic Mods")
-          .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+        return (
+          initCosmetic +
+          receipts
+            .filter((r) => r.category === "Cosmetic Mods")
+            .reduce((sum, r) => sum + (Number(r.price) || 0), 0)
+        );
       case "Performance Mods":
-        return receipts
-          .filter((r) => r.category === "Performance Mods")
-          .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+        return (
+          initPerformance +
+          receipts
+            .filter((r) => r.category === "Performance Mods")
+            .reduce((sum, r) => sum + (Number(r.price) || 0), 0)
+        );
       case "Paperwork & Taxes":
         return receipts
           .filter((r) => r.category === "Paperwork & Taxes")
@@ -1588,7 +1609,7 @@ export default function VehicleCardPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: `Give me insights about this receipt: ${receipt.title}, category: ${receipt.category}, price: ${receipt.price}, mileage: ${receipt.mileage}`,
+          prompt: `Give me insights about this receipt: ${receipt.title}, category: ${receipt.category}, price: ${receipt.price}, mileage: ${receipt.mileage}. Then, always search for and suggest a real, relevant product for this repair or maintenance, matching the vehicle (${vehicle?.year} ${vehicle?.make} ${vehicle?.model}), using Google or another search engine, and provide a direct purchase link (Amazon, eBay, or manufacturer). Format: [summary]\nProduct suggestion: [product name] [URL]`,
           vehicleId: id,
           vehicleDetails: vehicle,
         }),
@@ -2881,8 +2902,6 @@ export default function VehicleCardPage() {
                   </p>
                 </div>
               </div>,
-
-              // Ajoute autant de cartes que tu veux ici
             ]}
           />
         </section>

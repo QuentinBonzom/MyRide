@@ -43,6 +43,8 @@ const SLIDE_DATA = [
 ];
 
 export default function WelcomePage() {
+  const [loading, setLoading] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const mobileRef = useRef(null);
   const tabletRef = useRef(null);
@@ -50,16 +52,30 @@ export default function WelcomePage() {
 
   const redirectedRef = useRef(false);
 
-useEffect(() => {
-  const unsub = onAuthStateChanged(auth, (user) => {
-    if (user && !redirectedRef.current) {
-      redirectedRef.current = true;
-      router.replace("/myVehicles_page");
-    }
-  });
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (user) => {
+      if (user && !redirectedRef.current) {
+        redirectedRef.current = true;
+        router.replace("/myVehicles_page");
+      }
+    });
 
-  return () => unsub();
-}, [router]);
+    return () => unsub();
+  }, [router]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setFadeOut(true), 4500); // start fade out before hiding
+    const timer2 = setTimeout(() => setLoading(false), 5000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(timer2);
+    };
+  }, []);
 
   const handleMobileScroll = (e) => {
     const el = e.target;
@@ -69,6 +85,40 @@ useEffect(() => {
     const el = e.target;
     setCurrentSlide(Math.round(el.scrollLeft / el.clientWidth));
   };
+
+  if (loading) {
+    return (
+      <div
+        className={`flex items-center justify-center min-h-screen bg-gray-900 transition-opacity duration-500 fixed inset-0 z-50 ${
+          fadeOut ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+        style={{ pointerEvents: fadeOut ? "none" : "auto" }}
+      >
+        <Image
+          src="/logo-MR.png"
+          alt="MyRide Logo"
+          className="h-auto w-80 animate-pulse"
+          style={{ animation: "blink 1s infinite" }}
+          width={320}
+          height={80}
+        />
+        <style jsx>{`
+          @keyframes blink {
+            0%,
+            100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0.4;
+            }
+          }
+          .animate-pulse {
+            animation: blink 3s infinite;
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -143,7 +193,7 @@ useEffect(() => {
           </div>
           <Link
             href="/signup_page"
-            className="absolute inset-x-0 w-3/4 py-3 mx-auto text-2xl font-bold text-center text-white bg-purple-600 rounded-xl bottom-12"
+            className="absolute inset-x-0 z-50 w-3/4 py-3 mx-auto text-2xl font-bold text-center text-white bg-purple-600 rounded-xl bottom-12"
           >
             Get Started
           </Link>
@@ -179,7 +229,6 @@ useEffect(() => {
               className="h-auto w-80" // Tailwind fixes width, height auto
               style={{ height: "auto" }} // ensure aspect ratio
             />
-            
           </div>
 
           <h1 className="mb-8 text-5xl font-bold text-center text-white">
