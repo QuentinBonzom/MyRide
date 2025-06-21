@@ -321,7 +321,7 @@ export default function MyGarage() {
             <div className="relative inline-block">
               <button
                 onClick={() => setDropdownOpen((prev) => !prev)}
-                className="p-1 transition rounded-full hover:bg-gray-100"
+                className="p-1 transition rounded-full hover:bg-white/20"
                 title="Select Sum Type"
               >
                 <svg
@@ -340,12 +340,12 @@ export default function MyGarage() {
                 </svg>
               </button>
               {dropdownOpen && (
-                <div className="absolute left-0 z-20 w-56 mt-2 text-sm bg-white border border-gray-200 rounded-md shadow-lg">
+                <div className="absolute z-20 w-56 mt-2 text-sm bg-white border border-gray-400 rounded-md shadow-lg -left-36">
                   {sumOptions.map((option) => (
                     <button
                       key={option}
                       onClick={() => handleSumTypeSelect(option)}
-                      className={`block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 ${
+                      className={`block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-800 ${
                         sumType === option
                           ? "font-bold text-purple-700 bg-purple-50"
                           : ""

@@ -5,8 +5,6 @@ import { auth, db, storage } from "../lib/firebase";
 import {
   createUserWithEmailAndPassword,
   fetchSignInMethodsForEmail,
-  // signInWithPopup,
-  // OAuthProvider,
 } from "firebase/auth";
 import { doc, setDoc, collection, getDocs } from "firebase/firestore";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
@@ -15,22 +13,21 @@ import anonymousPng from "../public/anonymous.png";
 import Image from "next/image";
 
 export default function SignUp() {
-  // ────────────────────────────────────────────────────────────────────────────────
-  // State hooks
-  // ────────────────────────────────────────────────────────────────────────────────
-  const [firstName, setFirstName] = useState(""); // First Name / Prénom
-  const [lastName, setLastName] = useState(""); // Last Name / Nom
-  const [middleName, setMiddleName] = useState(""); // Middle Name / Deuxième prénom
-  const [email, setEmail] = useState(""); // Email address / Adresse e-mail
-  const [password, setPassword] = useState(""); // Password / Mot de passe
-  const [image, setImage] = useState(null); // Profile image file / Fichier image
-  const [loading, setLoading] = useState(false); // Loading indicator / Indicateur de chargement
-  const [errors, setErrors] = useState({}); // Field errors / Erreurs des champs
-  const [formError, setFormError] = useState(""); // Form-level error / Erreur générale du formulaire
-  const [step, setStep] = useState(1); // Current step in the sign-up process
+  // ──────── States ────────
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [signupReason, setSignupReason] = useState(""); // NEW STEP
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [image, setImage] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [formError, setFormError] = useState("");
+  const [step, setStep] = useState(1);
   const [checkingEmail, setCheckingEmail] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState("");
-  const [authMethod, setAuthMethod] = useState(null); // "email" or "apple"
+  const [authMethod, setAuthMethod] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
   const [cropping, setCropping] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -38,28 +35,18 @@ export default function SignUp() {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
   const [croppedImage, setCroppedImage] = useState(null);
   const fileInputRef = useRef();
+  const [emailCheckMsg, setEmailCheckMsg] = useState("");
 
   const router = useRouter();
 
-  // Add state for email check feedback
-  const [emailCheckMsg, setEmailCheckMsg] = useState("");
-
-  // ────────────────────────────────────────────────────────────────────────────────
-  // Validation helpers
-  // ────────────────────────────────────────────────────────────────────────────────
-  const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
-  //const validatePhone = (n) => /^\d{10}$/.test(n);
-
-  // ────────────────────────────────────────────────────────────────────────────────
-  // Handle file input change / Gestion du changement de fichier
-  // ────────────────────────────────────────────────────────────────────────────────
+  // ──────── Cropping ────────
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
       setImage(file);
       setCroppedImage(null);
       setCropping(true);
-      setErrors((prev) => ({ ...prev, profileImage: "" })); // clear previous error
+      setErrors((prev) => ({ ...prev, profileImage: "" }));
     }
   };
 
@@ -67,7 +54,6 @@ export default function SignUp() {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
 
-  // Utility to get cropped image as blob
   const getCroppedImg = async (imageSrc, crop) => {
     const createImage = (url) =>
       new Promise((resolve, reject) => {
@@ -118,7 +104,7 @@ export default function SignUp() {
     reader.readAsDataURL(image);
   };
 
-  // Password strength checker
+  // ──────── Password strength ────────
   const checkPasswordStrength = (pwd) => {
     if (!pwd) return "";
     if (pwd.length < 8) return "Too short";
@@ -129,9 +115,9 @@ export default function SignUp() {
     return "Strong";
   };
 
-  // ────────────────────────────────────────────────────────────────────────────────
-  // Step validation (no email verification, just format and uniqueness)
-  // ────────────────────────────────────────────────────────────────────────────────
+  // ──────── Validation by step ────────
+  const validateEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
   const validateStep = async () => {
     const newErrors = {};
     if (step === 1) {
@@ -139,6 +125,9 @@ export default function SignUp() {
       if (!lastName) newErrors.lastName = "Required field";
     }
     if (step === 2) {
+      if (!signupReason) newErrors.signupReason = "Please select a reason";
+    }
+    if (step === 3) {
       if (!email) newErrors.email = "Required field";
       else if (!validateEmail(email)) newErrors.email = "Invalid format";
       if (!password) newErrors.password = "Required field";
@@ -165,9 +154,7 @@ export default function SignUp() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ────────────────────────────────────────────────────────────────────────────────
-  // Handle next step
-  // ────────────────────────────────────────────────────────────────────────────────
+  // ──────── Step navigation ────────
   const handleNext = async () => {
     const valid = await validateStep();
     if (valid) {
@@ -178,17 +165,12 @@ export default function SignUp() {
     }
   };
 
-  // ────────────────────────────────────────────────────────────────────────────────
-  // Handle previous step
-  // ────────────────────────────────────────────────────────────────────────────────
   const handleBack = () => {
     setStep(step - 1);
     setFormError("");
   };
 
-  // ────────────────────────────────────────────────────────────────────────────────
-  // Main sign-up logic
-  // ────────────────────────────────────────────────────────────────────────────────
+  // ──────── Signup logic ────────
   const handleSignUp = async () => {
     setLoading(true);
     setErrors({});
@@ -232,6 +214,7 @@ export default function SignUp() {
         vehicles: [],
         profileImage: profileImageUrl,
         createdAt: new Date(),
+        signupReason, // Save the reason here !
       });
       router.push("/myVehicles_page");
     } catch (err) {
@@ -242,47 +225,7 @@ export default function SignUp() {
     }
   };
 
-  // Apple sign in handler
-  // const handleAppleSignIn = async () => {
-  //   setLoading(true);
-  //   setFormError("");
-  //   try {
-  //     const provider = new OAuthProvider("apple.com");
-  //     // Optionally, you can add scopes: provider.addScope('email');
-  //     const result = await signInWithPopup(auth, provider);
-  //     const user = result.user;
-  //     // Check if user profile exists in Firestore
-  //     const userDoc = await doc(db, "members", user.uid);
-  //     // If not, create a minimal profile (you can expand this logic as needed)
-  //     await setDoc(
-  //       userDoc,
-  //       {
-  //         firstName: user.displayName ? user.displayName.split(" ")[0] : "",
-  //         lastName: user.displayName
-  //           ? user.displayName.split(" ").slice(1).join(" ")
-  //           : "",
-  //         middleName: "",
-  //         dob: "",
-  //         email: user.email,
-  //         inviter: "frenchy",
-  //         rating: 5,
-  //         vehicles: [],
-  //         profileImage: user.photoURL || "/profile_icon.png",
-  //         createdAt: new Date(),
-  //         appleProvider: true,
-  //       },
-  //       { merge: true }
-  //     );
-  //     router.push("/myVehicles_page");
-  //   } catch (err) {
-  //     setFormError("Apple sign in failed. Please try again.");
-  //     console.error(err);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // Email field blur handler to check if email is already used (Firestore members collection)
+  // ──────── Email uniqueness check ────────
   const handleEmailBlur = async () => {
     setEmailCheckMsg("");
     setErrors((prev) => ({ ...prev, email: undefined }));
@@ -294,7 +237,6 @@ export default function SignUp() {
     }
     setCheckingEmail(true);
     try {
-      // Query all members and check for email match (case-insensitive)
       const membersSnap = await getDocs(collection(db, "members"));
       let found = false;
       membersSnap.forEach((docSnap) => {
@@ -318,14 +260,12 @@ export default function SignUp() {
     setCheckingEmail(false);
   };
 
-  // ────────────────────────────────────────────────────────────────────────────────
-  // JSX return (multi-step)
-  // ────────────────────────────────────────────────────────────────────────────────
+  // ──────── JSX return (multi-step) ────────
   return (
     <div className="flex items-center justify-center min-h-screen p-4 bg-zinc-900">
       <div className="relative flex flex-row w-full max-w-2xl bg-white shadow-lg rounded-2xl">
-        {/* Profile Picture Preview (left) - only show in Step 3 */}
-        {step === 3 && (
+        {/* Profile Picture Preview (left) - only show in last step */}
+        {step === 4 && (
           <div className="flex flex-col items-center justify-center w-1/3 p-4 border-r border-gray-200">
             <div className="relative w-32 h-32 overflow-hidden bg-gray-100 rounded-full shadow-lg">
               <Image
@@ -379,8 +319,9 @@ export default function SignUp() {
             </div>
           </div>
         )}
+
         {/* Signup Form (right) */}
-        <div className={`flex-1 p-8${step === 3 ? "" : " w-full"}`}>
+        <div className={`flex-1 p-8${step === 4 ? "" : " w-full"}`}>
           {/* Avatar */}
           <div className="absolute transform -translate-x-1/2 -top-12 left-1/2">
             <div className="p-1 bg-white rounded-full shadow-md">
@@ -421,22 +362,6 @@ export default function SignUp() {
               >
                 Continue with Email
               </button>
-              {/* <button
-                onClick={handleAppleSignIn}
-                className="flex items-center justify-center w-full gap-2 py-3 font-bold text-black bg-white border border-gray-300 rounded-lg hover:bg-gray-100"
-                disabled={loading}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  className="text-black"
-                >
-                  <path d="M16.5 2c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm4.3 6.1c-.1-2.1 1.7-3.1 1.8-3.2-1-1.5-2.6-1.7-3.2-1.7-1.4-.1-2.7.8-3.4.8-.7 0-1.8-.8-3-.8-1.5 0-2.9.9-3.7 2.3-1.6 2.7-.4 6.7 1.1 8.9.7 1 1.5 2.1 2.6 2.1 1 0 1.3-.7 2.6-.7s1.6.7 2.6.7c1.1 0 1.8-1 2.5-2 .8-1.1 1.1-2.2 1.1-2.3 0-.1-2.1-.8-2.1-3.2zm-4.2-6.1c.1-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2z" />
-                </svg>
-                Continue with Apple
-              </button> */}
               <p className="mt-4 text-sm text-center text-gray-500">
                 Already have an account?{" "}
                 <Link
@@ -449,9 +374,10 @@ export default function SignUp() {
             </div>
           )}
 
-          {/* Email sign up flow */}
+          {/* Email sign up flow, Multi-step */}
           {authMethod === "email" && (
             <div className="grid grid-cols-1 gap-4">
+              {/* STEP 1: Name */}
               {step === 1 && (
                 <>
                   <div>
@@ -498,8 +424,54 @@ export default function SignUp() {
                 </>
               )}
 
-              {/* Step 2: Email & Password */}
+              {/* STEP 2: Why did you download the app? */}
               {step === 2 && (
+                <>
+                  <div className="mb-6">
+                    <label
+                      className="block mb-2 font-medium text-black"
+                      htmlFor="signup-reason"
+                    >
+                      Why did you download the app? <span className="text-black">*</span>
+                    </label>
+                    <select
+                      id="signup-reason"
+                      value={signupReason}
+                      onChange={(e) => setSignupReason(e.target.value)}
+                      className="w-full px-4 py-2 rounded bg-[#18122B] border border-[#393053] text-white"
+                      required
+                    >
+                      <option value="">Select a reason</option>
+                      <option value="track_my_vehicle">Track my vehicle expenses</option>
+                      <option value="sell_my_vehicle">Sell my vehicle</option>
+                      <option value="buy_vehicle">Buy a vehicle</option>
+                      <option value="community">Join the community</option>
+                      <option value="other">Other</option>
+                    </select>
+                    {errors.signupReason && (
+                      <p className="mt-2 text-sm text-red-500">{errors.signupReason}</p>
+                    )}
+                  </div>
+                  <div className="flex justify-between mt-4">
+                    <button
+                      onClick={handleBack}
+                      className="px-4 py-2 font-bold text-purple-700 bg-white border border-purple-500 rounded-lg hover:bg-purple-50"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleNext}
+                      className="px-4 py-2 font-bold text-white rounded-lg bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800"
+                      disabled={!signupReason}
+                    >
+                      Continue
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* STEP 3: Email & Password */}
+              {step === 3 && (
                 <>
                   <div>
                     <label className="block mb-1 text-black">Email *</label>
@@ -541,9 +513,7 @@ export default function SignUp() {
                         value={password}
                         onChange={(e) => {
                           setPassword(e.target.value);
-                          setPasswordStrength(
-                            checkPasswordStrength(e.target.value)
-                          );
+                          setPasswordStrength(checkPasswordStrength(e.target.value));
                         }}
                         className="w-full px-4 py-2 pr-12 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                       />
@@ -627,8 +597,8 @@ export default function SignUp() {
                 </>
               )}
 
-              {/* Step 3: Profile Picture */}
-              {step === 3 && (
+              {/* STEP 4: Profile Picture */}
+              {step === 4 && (
                 <>
                   <div>
                     <label className="block mb-1 text-black">
@@ -669,11 +639,9 @@ export default function SignUp() {
               )}
             </div>
           )}
-
-          {/* Optionally, you can add Apple sign up logic here in the future */}
         </div>
       </div>
     </div>
   );
 }
-SignUp.noAuth = true; // <-- Add this line to tell your app/layout/middleware to NOT require auth for this page
+SignUp.noAuth = true;
