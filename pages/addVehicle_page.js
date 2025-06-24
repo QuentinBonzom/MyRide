@@ -1476,6 +1476,8 @@ export default function AddVehiclePage() {
   // Ajout des hooks d'état manquants
   const [vin, setVin] = useState("");
   const [description, setDescription] = useState("");
+  const [marketplace] = useState(false);
+
 
   // Ajout des champs techniques vides à la création Firestore
   const handleSubmit = async () => {
