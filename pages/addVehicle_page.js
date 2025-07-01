@@ -941,6 +941,7 @@ const modelsByMake = {
     // Softail
     "Street Bob",
     "Softail Standard",
+    "Softail Springer",
     "Low Rider S",
     "Low Rider ST",
     "Breakout",
