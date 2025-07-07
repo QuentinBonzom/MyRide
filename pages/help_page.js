@@ -6,23 +6,41 @@ export default function HelpPage() {
   const [message, setMessage] = useState("");
   const [confirmation, setConfirmation] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [userUid, setUserUid] = useState("");
 
   useEffect(() => {
     const user = auth.currentUser;
-    if (user) setUserEmail(user.email);
+    if (user) {
+      setUserEmail(user.email);
+      setUserUid(user.uid);
+    }
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!userEmail) {
-      setConfirmation("Error: No user email found!");
+    if (!userEmail || !userUid) {
+      setConfirmation("Error: User not authenticated properly.");
       return;
     }
+
+    const fullMessage = `
+From: ${userEmail}
+UID: ${userUid}
+Topic: ${topic}
+
+Message:
+${message}
+    `;
+
     try {
       const response = await fetch("/api/send-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userEmail, topic, message }),
+        body: JSON.stringify({
+          userEmail,
+          topic,
+          message: fullMessage, // full body with metadata
+        }),
       });
       const data = await response.json();
       if (response.ok) {
@@ -40,7 +58,7 @@ export default function HelpPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-b from-black to-gray-800">
-      {/* Mobile header */}
+      {/* Header */}
       <header className="px-4 py-4 bg-black/50">
         <h1 className="mt-5 text-4xl font-bold text-center text-white">
           Need Help ?
@@ -48,7 +66,6 @@ export default function HelpPage() {
       </header>
 
       <main className="flex-grow px-4 py-6">
-        {/* Form container */}
         <div className="w-full p-4 bg-white rounded-lg shadow">
           <p className="mt-2 text-gray-600">
             Have an issue, question, or feedback about MyRide ? <br />
@@ -56,10 +73,7 @@ export default function HelpPage() {
           </p>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label
-                htmlFor="topic"
-                className="block mb-2 text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="topic" className="block mb-2 text-sm font-medium text-gray-700">
                 Topic
               </label>
               <select
@@ -67,6 +81,7 @@ export default function HelpPage() {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 className="w-full px-4 py-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                required
               >
                 <option value="">Select a topic</option>
                 <option value="Account Issue">Account Issue</option>
@@ -76,10 +91,7 @@ export default function HelpPage() {
               </select>
             </div>
             <div>
-              <label
-                htmlFor="message"
-                className="block mb-2 text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="message" className="block mb-2 text-sm font-medium text-gray-700">
                 Message
               </label>
               <textarea
@@ -105,7 +117,6 @@ export default function HelpPage() {
         </div>
       </main>
 
-      {/* Mobile footer */}
       <footer className="px-4 py-4 text-sm text-center text-gray-400">
         © {new Date().getFullYear()} MyRide. All rights reserved.
       </footer>

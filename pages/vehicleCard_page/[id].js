@@ -2,7 +2,21 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { auth, db, storage } from "../../lib/firebase";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Legend,
+  Sankey,
+  Tooltip as RechartsTooltip,
+  PieChart,
+  Pie,
+  Cell,
+  CartesianGrid,
+} from "recharts";
+
 import {
   doc,
   getDoc,
@@ -10,6 +24,7 @@ import {
   getDocs,
   setLogLevel,
   setDoc,
+  updateDoc,
   deleteDoc,
 } from "firebase/firestore";
 import {
@@ -580,7 +595,6 @@ export default function VehicleCardPage() {
   const router = useRouter();
   const [showInfo, setShowInfo] = useState(false);
   const { id } = router.query;
-  
   // Hooks dans un ordre fixe
   const [user, setUser] = useState(null);
   const [vehicle, setVehicle] = useState(null);
@@ -595,6 +609,30 @@ export default function VehicleCardPage() {
   const [showReceiptForm, setShowReceiptForm] = useState(false);
   const [editingReceipt, setEditingReceipt] = useState(null);
   const [allDocs, setAllDocs] = useState([]);
+  const [showInsurance, setShowInsurance] = useState(false);
+  const [insuranceCost, setInsuranceCost] = useState(0);
+  const [insuranceLength, setInsuranceLength] = useState(0);
+  const [insuranceStart, setInsuranceStart] = useState("");
+  const [manualInsuranceMonthly, setManualInsuranceMonthly] = useState("");
+
+
+
+  const [showOwnership, setShowOwnership] = useState(false);
+  const [ownershipType, setOwnershipType] = useState("");
+  const [loanAmount, setLoanAmount] = useState(0);
+  const [loanLength, setLoanLength] = useState(0);
+  const [interestRate, setInterestRate] = useState(0);
+  const [loanStart, setLoanStart] = useState("");
+  const [manualMonthlyPayment, setManualMonthlyPayment] = useState("");
+
+  // Calculated estimates
+  const estimatedInsuranceMonthly =
+    insuranceLength > 0 ? (insuranceCost / insuranceLength).toFixed(2) : "";
+
+  const estimatedLoanMonthly =
+    loanAmount && loanLength
+      ? ((loanAmount * (1 + (interestRate || 0) / 100)) / loanLength).toFixed(2)
+      : "";
   const [selectedItem, setSelectedItem] = useState("Total Spent");
   // Added state for enlarged image index
   const [enlargedIdx, setEnlargedIdx] = useState(null);
@@ -635,6 +673,54 @@ export default function VehicleCardPage() {
   const [loading, setLoading] = useState(true);
 
   // ...inside VehicleCardPage component...
+  const handleSaveInsurance = async () => {
+  if (!id) {
+    console.error("No vehicle ID");
+    return;
+  }
+  const insuranceData = {
+    insuranceCost,
+    insuranceLength,
+    insuranceStart,
+    manualInsuranceMonthly,
+  };
+
+  const docRef = doc(db, "listing", id); // use id here!
+
+  try {
+    await updateDoc(docRef, {
+      insuranceInfo: insuranceData,
+    });
+    setShowInsurance(false);
+  } catch (err) {
+    console.error("Failed to save insurance info:", err);
+  }
+};
+const handleSaveOwnership = async () => {
+  if (!id) {
+    console.error("No vehicle ID");
+    return;
+  }
+  const ownershipData = {
+    ownershipType,
+    loanAmount,
+    loanLength,
+    interestRate,
+    loanStart,
+    manualMonthlyPayment,
+  };
+
+  const docRef = doc(db, "listing", id); // use id here!
+
+  try {
+    await updateDoc(docRef, {
+      ownershipInfo: ownershipData,
+    });
+    setShowOwnership(false);
+  } catch (err) {
+    console.error("Failed to save ownership info:", err);
+  }
+};
   const handleShare = async () => {
     try {
       // Fetch the current user's firstName from Firebase
@@ -1475,746 +1561,17 @@ export default function VehicleCardPage() {
       <ToastContainer />
       <div className="container px-4 py-10 mx-auto text-white md:pt-28 bg-zinc-900">
         {/* Header */}
-        <header className="flex items-center justify-center gap-2 pt-8 mb-8 text-center">
-          <h1 className="text-4xl font-bold">
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </h1>
-          <button
-            onClick={handleShare}
-            className="flex items-center justify-center w-10 h-10 ml-3 transition rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-            title="Share this vehicle"
-            type="button"
-          >
-            <Share2 className="w-6 h-6 text-white" />
-          </button>
-        </header>
+
         {/* Gallery + Vehicle Info Section */}
-        <div className="grid gap-8 md:grid-cols-2">
-          {/* Photo gallery: display only 4 images */}
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
-            {images.slice(0, 4).map((url, i) => (
-              <div
-                key={i}
-                className="relative pb-[100%] cursor-pointer rounded-lg shadow-lg transition transform hover:scale-105"
-                onClick={() => setEnlargedIdx(i)}
-              >
-                <Image
-                  src={url}
-                  alt={`Vehicle ${i}`}
-                  fill
-                  className="object-cover rounded-lg"
-                />
-              </div>
-            ))}
-          </div>
 
-          <div className="flex items-center justify-between mb-2 md:hidden">
-            <h2 className="text-2xl font-bold">Vehicle Info</h2>
-            <button
-              onClick={() => setShowInfo((v) => !v)}
-              className="p-2 ml-3 transition group" // No rounded, no bg, just padding for click area
-              title={showInfo ? "Hide Info" : "Show Info"}
-              type="button"
-            >
-              {showInfo ? (
-                <ChevronUp className="w-6 h-6 text-purple-400 transition-colors group-hover:text-pink-500" />
-              ) : (
-                <ChevronDown className="w-6 h-6 text-purple-400 transition-colors group-hover:text-pink-500" />
-              )}
-            </button>
-          </div>
 
-          {/* Vehicle Info & Actions Card */}
-          <div
-            className={`p-6 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700 ${
-              showInfo ? "" : "hidden"
-            } md:block`}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">Vehicle Info</h2>
-              {user.uid === vehicle.uid && (
-                <button
-                  onClick={() => setEditMode(true)}
-                  className="p-1 transition group"
-                  title="Edit Vehicle"
-                  type="button"
-                >
-                  <Edit className="w-6 h-6 text-purple-400 transition-colors group-hover:text-pink-500" />
-                </button>
-              )}
-            </div>
-            {/* Updated Vehicle Info container: force 2 columns on all screens */}
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              {[
-                { label: "Year", value: vehicle.year },
-                { label: "Make", value: vehicle.make },
-                { label: "Model", value: vehicle.model },
-                { label: "City", value: vehicle.city },
-                { label: "State", value: vehicle.state },
-                { label: "VIN", value: vehicle.vin },
-                { label: "Mileage", value: vehicle.mileage },
-                { label: "Color", value: vehicle.color },
-                { label: "Engine", value: vehicle.engine },
-                { label: "Transmission", value: vehicle.transmission },
-                {
-                  label: "Horsepower",
-                  value: vehicle.horsepower
-                    ? `${vehicle.horsepower} HP`
-                    : "N/A",
-                },
-                { label: "Fuel Type", value: vehicle.fuelType },
-                { label: "Vehicle Type", value: vehicle.vehicleType || "N/A" },
-                {
-                  label: "Purchase Price",
-                  value: vehicle.boughtAt ? `$${vehicle.boughtAt}` : "N/A",
-                },
-                {
-                  label: "Purchase Year",
-                  value: vehicle.purchaseYear || "N/A",
-                },
-                { label: "Owner", value: ownerName },
-              ].map((item, idx) => (
-                <div key={idx} className="flex flex-col text-left">
-                  <div className="flex items-center">
-                    {icons[item.label]}
-                    <span className="mr-2 text-neutral-400">{item.label}:</span>
-                  </div>
-                  <span className="font-medium">
-                    {item.label === "Color" ? (
-                      <>
-                        <span
-                          className="inline-block w-3 h-3 mr-1 rounded-full"
-                          style={{
-                            backgroundColor:
-                              vehicle.color?.toLowerCase() || "#ccc", // Ajout d'une valeur par défaut
-                          }}
-                        />
-                        {item.value}
-                      </>
-                    ) : (
-                      item.value || "N/A"
-                    )}
-                  </span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-6">
-              <h3 className="flex items-center mb-1 text-lg font-medium">
-                <Info className="w-4 h-4 mr-2" /> Vehicle Condition
-              </h3>
-              <span className="inline-block px-3 py-1 text-xs font-semibold text-green-800 bg-green-200 rounded-xl">
-                Excellent
-              </span>
-            </div>
-          </div>
-        </div>
-        {/* Enlarged image modal showing full gallery */}
-        {enlargedIdx !== null && (
-          <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-            onClick={() => setEnlargedIdx(null)} // Ferme le modal au clic en dehors
-          >
-            <button
-              className="absolute text-2xl text-white top-4 right-4 hover:text-gray-300"
-              onClick={() => setEnlargedIdx(null)} // Bouton pour fermer le modal
-            >
-              &times;
-            </button>
-            <div className="relative w-full max-w-2xl max-h-[80vh] flex items-center">
-              {/* Flèche gauche */}
-              <button
-                className="absolute left-[-50px] z-10 p-3 text-white bg-gray-800 rounded-full shadow-lg hover:bg-gray-700"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEnlargedIdx((prev) =>
-                    prev > 0 ? prev - 1 : images.length - 1
-                  );
-                }}
-              >
-                &#8249;
-              </button>
-              {/* Image agrandie */}
-              <Image
-                src={images[enlargedIdx]} // Utilise l'index pour afficher l'image correcte
-                alt={`Vehicle ${enlargedIdx}`}
-                className="object-contain max-w-full max-h-full"
-                width={1000}
-                height={700}
-                priority
-              />
-              {/* Flèche droite */}
-              <button
-                className="absolute right-[-50px] z-10 p-3 text-white bg-gray-800 rounded-full shadow-lg hover:bg-gray-700"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEnlargedIdx((prev) =>
-                    prev < images.length - 1 ? prev + 1 : 0
-                  );
-                }}
-              >
-                &#8250;
-              </button>
-            </div>
-          </div>
-        )}
-        {/* NEW: Description Card */}
-        <div className="max-w-4xl p-6 mx-auto mt-8 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700">
-          <h2 className="mb-4 text-2xl font-bold">Description</h2>
-          <p className="text-lg">
-            {vehicle.description || "No description provided"}
-          </p>
-        </div>
         {/* Redesigned layout for everything after Vehicle Info: */}
         {/* Redesigned layout for everything after Vehicle Info */}
         <section className="w-full max-w-6xl grid-cols-1 gap-8 mx-auto mt-12 lg:grid-cols-2">
           <div className="grid max-w-6xl grid-cols-1 gap-8 mx-auto lg:grid-cols-2">
-            {/* Left Column: Maintenance & Receipts */}
-            <div className="p-6 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700">
-              <div className="flex items-center justify-between pb-2 mb-4 border-b">
-                <h2 className="text-2xl font-bold text-white">
-                  Maintenance & Receipts
-                </h2>
-                {!vehicle.ownerManual ? (
-                  <button
-                    onClick={() => setShowManual(true)}
-                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded hover:bg-purple-700"
-                  >
-                    Sync Owner Manual
-                  </button>
-                ) : (
-                  <span className="text-xs italic text-neutral-600">
-                    Owner Manual Synced
-                  </span>
-                )}
-              </div>
 
-              <div className="flex space-x-4 justify-items-center">
-                {/* Dropdown for selecting a value */}
-                <div className="flex flex-col gap-4 mx-auto justify-items-center">
-                  <select
-                    className="p-2 text-white border rounded bg-neutral-700 border-neutral-600 min-w-[160px]"
-                    value={selectedItem || ""}
-                    onChange={(e) => setSelectedItem(e.target.value)}
-                  >
-                    <option value="" disabled>
-                      Select a value
-                    </option>
-                    {[
-                      {
-                        label: "Total Spent",
-                        value: `$${calculateSum("Total Spent").toFixed(2)}`,
-                      },
-                      {
-                        label: "Without Purchase Price",
-                        value: `$${calculateSum(
-                          "Without Purchase Price"
-                        ).toFixed(2)}`,
-                      },
-                      {
-                        label: "Repair",
-                        value: `$${calculateSum("Repair").toFixed(2)}`,
-                      },
-                      {
-                        label: "Scheduled Maintenance",
-                        value: `$${calculateSum(
-                          "Scheduled Maintenance"
-                        ).toFixed(2)}`,
-                      },
-                      {
-                        label: "Cosmetic Mods",
-                        value: `$${calculateSum("Cosmetic Mods").toFixed(2)}`,
-                      },
-                      {
-                        label: "Performance Mods",
-                        value: `$${calculateSum("Performance Mods").toFixed(
-                          2
-                        )}`,
-                      },
-                      {
-                        label: "Paperwork & Taxes",
-                        value: `$${calculateSum("Paperwork & Taxes").toFixed(
-                          2
-                        )}`,
-                      },
-                    ].map((item, idx) => (
-                      <option key={idx} value={item.label}>
-                        {item.label}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* Value card */}
-                  <div className="flex flex-col justify-center items-start min-w-[160px] px-6 py-4 rounded-lg bg-neutral-900 border border-neutral-700 shadow-lg">
-                    {selectedItem ? (
-                      <>
-                        <span className="text-lg font-semibold text-white">
-                          {selectedItem}
-                        </span>
-                        <span className="mt-1 text-2xl font-bold text-green-400">
-                          {
-                            [
-                              {
-                                label: "Total Spent",
-                                value: `$${calculateSum("Total Spent").toFixed(
-                                  2
-                                )}`,
-                              },
-                              {
-                                label: "Without Purchase Price",
-                                value: `$${calculateSum(
-                                  "Without Purchase Price"
-                                ).toFixed(2)}`,
-                              },
-                              {
-                                label: "Repair",
-                                value: `$${calculateSum("Repair").toFixed(2)}`,
-                              },
-                              {
-                                label: "Scheduled Maintenance",
-                                value: `$${calculateSum(
-                                  "Scheduled Maintenance"
-                                ).toFixed(2)}`,
-                              },
-                              {
-                                label: "Cosmetic Mods",
-                                value: `$${calculateSum(
-                                  "Cosmetic Mods"
-                                ).toFixed(2)}`,
-                              },
-                              {
-                                label: "Performance Mods",
-                                value: `$${calculateSum(
-                                  "Performance Mods"
-                                ).toFixed(2)}`,
-                              },
-                              {
-                                label: "Paperwork & Taxes",
-                                value: `$${calculateSum(
-                                  "Paperwork & Taxes"
-                                ).toFixed(2)}`,
-                              },
-                            ].find((item) => item.label === selectedItem)?.value
-                          }
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-sm text-neutral-400">
-                        Select a value to see its amount
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 text-xs font-semibold text-white">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-xl font-semibold text-white">
-                    AI Recommendation
-                  </h3>
-                  <button
-                    onClick={async () => {
-                      try {
-                        // Call the analyzeManual API directly
-                        const res = await fetch("/api/analyzeManual", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            vehicleId: id,
-                            currentMileage: vehicle.mileage,
-                          }),
-                        });
-
-                        if (!res.ok) {
-                          throw new Error(
-                            `API error: ${res.status} ${res.statusText}`
-                          );
-                        }
-
-                        // Fetch the updated aiRecommendation field from Firestore
-                        const snap = await getDoc(doc(db, "listing", id));
-                        if (!snap.exists()) {
-                          throw new Error("Vehicle not found");
-                        }
-
-                        const vehicleData = snap.data();
-                        setAiRec(
-                          vehicleData.aiRecommendation ||
-                            "No AI recommendation available."
-                        );
-                        toast.success(
-                          "AI Recommendation refreshed successfully!"
-                        );
-                      } catch (error) {
-                        console.error(
-                          "Error refreshing AI recommendation:",
-                          error.message
-                        );
-                        toast.error("Failed to refresh AI recommendation.");
-                      }
-                    }}
-                    className="p-2 text-purple-500 transition rounded-full hover:text-pink-500"
-                    title="Refresh AI Recommendation"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="1.5"
-                      stroke="currentColor"
-                      className="w-6 h-6"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                      />
-                    </svg>
-                  </button>
-                </div>
-                <pre className="p-3 whitespace-pre-wrap rounded bg-neutral-700 txt-xs">
-                  {aiRec}
-                </pre>
-              </div>
-              <div className="mt-4">
-                <h3 className="mb-2 text-xl font-semibold text-white">
-                  Ask AI
-                </h3>
-                <input
-                  type="text"
-                  placeholder="Ask a question about your vehicle..."
-                  className="w-full p-3 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
-                  value={aiQuestion}
-                  onChange={(e) => setAiQuestion(e.target.value)}
-                />
-                <button
-                  onClick={askAi}
-                  disabled={loadingAiQuestion}
-                  className="w-full mb-4 button-main"
-                >
-                  {loadingAiQuestion ? "Loading..." : "Ask AI"}
-                </button>
-                {aiAnswer && (
-                  <div className="p-4 text-white rounded bg-neutral-700">
-                    <h3 className="mb-2 text-lg font-semibold">AI Response:</h3>
-                    <p>{aiAnswer}</p>
-                  </div>
-                )}
-              </div>
-              {/* Receipts Section */}
-              <div className="mt-4">
-                <h3 className="mb-2 text-xl font-semibold text-white">
-                  Receipts
-                </h3>
-                <div className="max-h-[30vh] overflow-y-auto">
-                  {receipts.length ? (
-                    <div className="space-y-2">
-                      {receipts.map((r) => (
-                        <div
-                          key={r.id}
-                          className="flex items-center justify-between gap-4"
-                        >
-                          {/* Title left, price center, icons right */}
-                          <div className="flex-1 min-w-0">
-                            <button
-                              onClick={() => {
-                                if (r.urls && r.urls.length > 0) {
-                                  setSelectedReceiptUrls(r.urls);
-                                }
-                              }}
-                              className="block w-full text-left text-purple-500 truncate hover:underline hover:text-pink-500"
-                              title={r.title}
-                            >
-                              {r.date
-                                ? formatDateMMDDYYYY(
-                                    r.date.seconds ? r.date.seconds * 1000 : r.date
-                                  )
-                                : ""}
-                              <br />
-                              <span className="font-medium">{r.title}</span>
-                            </button>
-                          </div>
-                          <div className="flex items-center flex-shrink-0 min-w-[100px] justify-center">
-                            <span className="font-semibold text-neutral-400">
-                              ${r.price.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex items-center flex-shrink-0 min-w-[70px] justify-end">
-                            {vehicle.uid === user.uid ? (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    setEditingReceipt(r);
-                                    setShowReceiptForm(true);
-                                  }}
-                                  className="p-1 text-purple-400 transition rounded hover:text-pink-500"
-                                  title="Edit Receipt"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="1.5"
-                                    stroke="currentColor"
-                                    className="w-5 h-5"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
-                                    />
-                                  </svg>
-                                </button>
-                                <button
-                                  onClick={() => setReceiptToDelete(r)}
-                                  className="p-1 transition rounded text-purple500 hover:text-pink-500"
-                                  title="Delete Receipt"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="1.5"
-                                    stroke="currentColor"
-                                    className="w-6 h-6"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M6 18 18 6M6 6l12 12"
-                                    />
-                                  </svg>
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => handleDownloadReceipt(r.urls)}
-                                className="p-1 ml-auto"
-                                disabled={!(r.urls && r.urls.length > 0)}
-                                title="Download receipt"
-                              >
-                                <Download className="w-6 h-6 text-blue-400 hover:text-blue-500" />
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p>No receipts</p>
-                  )}
-                </div>
-                {vehicle.uid === user.uid && (
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={() => {
-                        setEditingReceipt(null);
-                        setShowReceiptForm(true);
-                      }}
-                      className="mt-3 button-main"
-                    >
-                      + Add Receipt
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
             {/* Right Column: Admin Documents & Depreciation */}
             <div className="space-y-8">
-              {/* Documents */}
-              <div className="p-6 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700">
-                <h2 className="pb-2 mb-4 text-2xl font-bold text-white border-b">
-                  Paperwork
-                </h2>
-                {/* Grid for Title, Registration and Inspection */}
-                <div className="flex gap-2 p-2 overflow-x-auto no-scrollbar">
-                  {["title", "registration", "inspection"].map((type) => {
-                    const docObj = allDocs.find((d) =>
-                      d.name.toLowerCase().includes(type)
-                    );
-                    const labels = {
-                      title: "Title",
-                      registration: "Registration",
-                      inspection: "Inspection",
-                    };
-                    const iconSrcs = {
-                      title: "/title_icon.png",
-                      registration: "/registration_icon.png",
-                      inspection: "/inspection_icon.png",
-                    };
-                    const deadlineMatch =
-                      docObj?.name.match(/\d{2}-\d{2}-\d{4}/);
-                    const deadline = deadlineMatch
-                      ? new Date(deadlineMatch[0])
-                      : null;
-                    const isExpired = deadline && deadline < new Date();
-                    const bgColor = !docObj
-                      ? "bg-gray-500"
-                      : isExpired
-                      ? "bg-pink-900"
-                      : "bg-purple-900";
-
-                    // --- Ajouter ici ---
-                    let iconFilter = "";
-                    if (bgColor.includes("purple")) {
-                      iconFilter =
-                        "invert(1) hue-rotate(270deg) brightness(1.2)";
-                    } else if (bgColor.includes("pink")) {
-                      iconFilter =
-                        "invert(1) sepia(1) hue-rotate(290deg) saturate(4) brightness(1.1)";
-                    } else {
-                      iconFilter = "invert(0.7) brightness(1.2)";
-                    }
-
-                    return (
-                      <div
-                        key={type}
-                        className={`flex-shrink-0 flex flex-col items-center p-4 rounded-lg ${bgColor}`}
-                        style={{ minWidth: 140, maxWidth: 180 }}
-                      >
-                        {vehicle.uid === user.uid ? (
-                          <>
-                            <div className="flex items-center justify-center w-10 h-16 mb-2">
-                              <Image
-                                src={iconSrcs[type]}
-                                alt={labels[type]}
-                                width={32}
-                                height={32}
-                                className="object-contain w-8 h-8"
-                                style={{ filter: iconFilter }}
-                                unoptimized
-                              />
-                            </div>
-                            <span className="text-sm font-medium text-white">
-                              {labels[type]}
-                            </span>
-
-                            {docObj ? (
-                              <>
-                                <div className="flex flex-col items-center mt-1 space-y-1">
-                                  <button
-                                    onClick={() =>
-                                      setSelectedAdminDocUrl(docObj.url)
-                                    }
-                                    className="cursor-pointer"
-                                    title="View document"
-                                  >
-                                    <Eye className="w-8 h-8 text-purple-300 hover:text-purple-400" />
-                                  </button>
-                                  <div className="flex space-x-2">
-                                    {/* Edit button on the left */}
-                                    <button
-                                      onClick={() =>
-                                        document
-                                          .getElementById(
-                                            `modify-file-input-${type}`
-                                          )
-                                          .click()
-                                      }
-                                      className="text-purple-200 hover:text-pink-200"
-                                      title="Modify document"
-                                    >
-                                      <Edit className="w-4 h-4" />
-                                    </button>
-                                    {/* Cross (delete) button on the right */}
-                                    <button
-                                      onClick={() => removeDocument(type)}
-                                      className="text-purple-200 hover:text-pink-200"
-                                      title="Delete document"
-                                    >
-                                      <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        strokeWidth="1.5"
-                                        stroke="currentColor"
-                                        className="w-5 h-5"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          d="M6 18 18 6M6 6l12 12"
-                                        />
-                                      </svg>
-                                    </button>
-                                  </div>
-                                </div>
-                                <input
-                                  id={`modify-file-input-${type}`}
-                                  type="file"
-                                  className="hidden"
-                                  onChange={(e) =>
-                                    e.target.files[0] &&
-                                    handleUploadAdminDocument(
-                                      type,
-                                      e.target.files[0]
-                                    )
-                                  }
-                                />
-                              </>
-                            ) : (
-                              <>
-                                <label
-                                  htmlFor={`file-input-${type}`}
-                                  className="mt-1 cursor-pointer"
-                                  title="Add document"
-                                >
-                                  <PlusCircle className="w-8 h-8 text-gray-200 hover:text-gray-100" />
-                                </label>
-                                <input
-                                  id={`file-input-${type}`}
-                                  type="file"
-                                  className="hidden"
-                                  onChange={(e) =>
-                                    e.target.files[0] &&
-                                    handleUploadAdminDocument(
-                                      type,
-                                      e.target.files[0]
-                                    )
-                                  }
-                                />
-                              </>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            <div
-                              className={`w-16 h-16 flex items-center justify-center mb-2`}
-                            >
-                              <Image
-                                src={iconSrcs[type]}
-                                alt={labels[type]}
-                                width={32}
-                                height={32}
-                                className="object-contain w-8 h-8"
-                                style={{ filter: iconFilter }}
-                                unoptimized
-                              />
-                            </div>
-                            <h3 className="text-sm font-medium text-white">
-                              {labels[type]}
-                            </h3>
-                            <span className="mt-1 text-xs text-gray-300">
-                              {docObj
-                                ? isExpired
-                                  ? "Expired"
-                                  : "Valid"
-                                : "Not Added"}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* notice for non-owners */}
-                {vehicle.uid !== user.uid && (
-                  <p className="mt-4 text-sm text-center text-gray-400">
-                    Only the vehicle owner can view and manage these documents.
-                  </p>
-                )}
-              </div>
               {/* Finance section */}
               <section className="p-6 rounded-lg shadow-lg bg-neutral-800">
                 {/* En-tête KPI */}
@@ -2263,7 +1620,418 @@ export default function VehicleCardPage() {
                       height="100%"
                     />
                   </div>
+                  {/* Expenses Pie Chart */}
+                  <div className="flex flex-col items-center justify-center mt-8">
+                    <h4 className="mb-2 text-lg font-semibold text-white">Expenses Breakdown</h4>
+                    {(() => {
+                      const expenseCategories = [
+                        "Repair",
+                        "Scheduled Maintenance",
+                        "Cosmetic Mods",
+                        "Performance Mods",
+                        "Paperwork & Taxes",
+                      ];
+                      const data = expenseCategories.map((category) => ({
+                        name: category,
+                        value: receipts
+                          .filter((r) => r.category === category)
+                          .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
+                      }));
+                      const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#00c49f"];
+                      return (
+                        <PieChart width={320} height={220}>
+                          <Pie
+                            data={data}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            dataKey="value"
+                            nameKey="name"
+                          >
+                            {data.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <RechartsTooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                          <Legend />
+                        </PieChart>
+                      );
+                    })()}
+                  </div>
+                  {/* Monthly Budget Flowchart */}
+                  <div className="flex flex-col items-center justify-center mt-8">
+                    <h4 className="mb-2 text-lg font-semibold text-white">Monthly Budget Overview</h4>
+                    {(() => {
+                      // Calculate months since createdAt
+                      let months = 1;
+                      if (vehicle.createdAt) {
+                        const created = vehicle.createdAt.seconds
+                          ? new Date(vehicle.createdAt.seconds * 1000)
+                          : new Date(vehicle.createdAt);
+                        const now = new Date();
+                        months = (now.getFullYear() - created.getFullYear()) * 12 + (now.getMonth() - created.getMonth()) + 1;
+                        if (months < 1) months = 1;
+                      }
+                      const expenseCategories = [
+                        "Repair",
+                        "Scheduled Maintenance",
+                        "Cosmetic Mods",
+                        "Performance Mods",
+                        "Paperwork & Taxes",
+                      ];
+                      const monthlyData = expenseCategories.map((category) => {
+                        const total = receipts
+                          .filter((r) => r.category === category)
+                          .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+                        return {
+                          name: category,
+                          value: months > 0 ? (total / months) : 0,
+                        };
+                      });
+                      // Credit, Insurance, Gas fields (can be undefined)
+                      const credit = vehicle.credit || null;
+                      const insurance = vehicle.insurance || null;
+                      const gas = vehicle.gas || null;
+                      return (
+                        <div className="flex flex-wrap gap-4 justify-center items-stretch w-full max-w-2xl">
+                          {monthlyData.map((item, idx) => (
+                            <div key={item.name} className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                              <span className="text-sm text-gray-400">{item.name}</span>
+                              <span className="text-xl font-bold text-green-400">${item.value.toFixed(2)}</span>
+                              <span className="text-xs text-gray-500">/month</span>
+                            </div>
+                          ))}
+                          <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                            <span className="text-sm text-gray-400">Credit</span>
+                            <span className="text-xl font-bold text-blue-400">{credit !== null && credit !== undefined && credit !== '' ? `$${Number(credit).toFixed(2)}` : '—'}</span>
+                            <span className="text-xs text-gray-500">/month</span>
+                          </div>
+                          <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                            <span className="text-sm text-gray-400">Insurance</span>
+                            <span className="text-xl font-bold text-purple-400">{insurance !== null && insurance !== undefined && insurance !== '' ? `$${Number(insurance).toFixed(2)}` : '—'}</span>
+                            <span className="text-xs text-gray-500">/month</span>
+                          </div>
+                          <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                            <span className="text-sm text-gray-400">Gas</span>
+                            <span className="text-xl font-bold text-yellow-400">{gas !== null && gas !== undefined && gas !== '' ? `$${Number(gas).toFixed(2)}` : <span className="italic text-gray-500">(coming soon)</span>}</span>
+                            <span className="text-xs text-gray-500">/month</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+
+<div className="mt-10 w-full max-w-xl mx-auto text-white space-y-6">
+  <h4 className="text-lg font-semibold text-center">Update Financial Details</h4>
+
+{/* Insurance Info */}
+<div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
+  <h5 className="mb-2 text-md font-semibold">🛡️ Insurance Info</h5>
+  <button
+    onClick={() => setShowInsurance(true)}
+    className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+  >
+    Update Insurance
+  </button>
+
+  {showInsurance && (
+    <div className="mt-4 space-y-2">
+      <label className="block text-sm font-medium text-gray-300">Total Insurance Cost ($)</label>
+      <input
+        type="number"
+        placeholder="Total Insurance Cost ($)"
+        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+        value={insuranceCost}
+        onChange={(e) => {
+          const val = Number(e.target.value);
+          setInsuranceCost(val);
+          const est = insuranceLength > 0 ? (val / insuranceLength).toFixed(2) : "";
+          if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
+            setManualInsuranceMonthly(est);
+          }
+        }}
+      />
+
+      <label className="block text-sm font-medium text-gray-300">Length (months)</label>
+      <input
+        type="number"
+        placeholder="Length (months)"
+        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+        value={insuranceLength}
+        onChange={(e) => {
+          const val = Number(e.target.value);
+          setInsuranceLength(val);
+          const est = val > 0 ? (insuranceCost / val).toFixed(2) : "";
+          if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
+            setManualInsuranceMonthly(est);
+          }
+        }}
+      />
+
+      <label className="block text-sm font-medium text-gray-300">Start Date</label>
+      <input
+        type="date"
+        placeholder="Start Date"
+        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+        value={insuranceStart}
+        onChange={(e) => setInsuranceStart(e.target.value)}
+      />
+
+      <label className="block text-sm font-medium text-gray-300">Monthly Insurance Payment ($)</label>
+      <input
+        type="number"
+        placeholder="Monthly Insurance Payment ($)"
+        className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+        value={manualInsuranceMonthly}
+        onChange={(e) => setManualInsuranceMonthly(e.target.value)}
+      />
+
+      <p className="text-sm text-gray-400 italic">
+        Monthly: {insuranceLength > 0 ? `$${(insuranceCost / insuranceLength).toFixed(2)}` : "—"}
+      </p>
+
+      {/* Save button for Insurance Info */}
+      <button
+        onClick={handleSaveInsurance}
+        className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+      >
+        Save Insurance Info
+      </button>
+    </div>
+  )}
+</div>
+
+{/* Ownership Info */}
+<div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
+  <h5 className="mb-2 text-md font-semibold">💰 Ownership Info</h5>
+  <button
+    onClick={() => setShowOwnership(true)}
+    className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+  >
+    Update Ownership
+  </button>
+
+  {showOwnership && (
+    <div className="mt-4 space-y-2">
+      <label className="block text-sm font-medium text-gray-300">Ownership Type</label>
+      <select
+        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+        value={ownershipType}
+        onChange={(e) => setOwnershipType(e.target.value)}
+      >
+        <option value="">Select Type</option>
+        <option value="Owned">Owned</option>
+        <option value="Financed">Financed</option>
+      </select>
+
+      {ownershipType === "Financed" && (
+        <>
+          <label className="block text-sm font-medium text-gray-300">Loan Amount ($)</label>
+          <input
+            type="number"
+            placeholder="Loan Amount ($)"
+            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+            value={loanAmount}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              setLoanAmount(val);
+              const est =
+                val && loanLength
+                  ? ((val * (1 + (interestRate || 0) / 100)) / loanLength).toFixed(2)
+                  : "";
+              if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                setManualMonthlyPayment(est);
+              }
+            }}
+          />
+
+          <label className="block text-sm font-medium text-gray-300">Length (months)</label>
+          <input
+            type="number"
+            placeholder="Length (months)"
+            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+            value={loanLength}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              setLoanLength(val);
+              const est =
+                loanAmount && val
+                  ? ((loanAmount * (1 + (interestRate || 0) / 100)) / val).toFixed(2)
+                  : "";
+              if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                setManualMonthlyPayment(est);
+              }
+            }}
+          />
+
+          <label className="block text-sm font-medium text-gray-300">Interest Rate (%)</label>
+          <input
+            type="number"
+            placeholder="Interest Rate (%)"
+            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+            value={interestRate}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              setInterestRate(val);
+              const est =
+                loanAmount && loanLength
+                  ? ((loanAmount * (1 + (val || 0) / 100)) / loanLength).toFixed(2)
+                  : "";
+              if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                setManualMonthlyPayment(est);
+              }
+            }}
+          />
+
+          <label className="block text-sm font-medium text-gray-300">Start Date</label>
+          <input
+            type="date"
+            placeholder="Start Date"
+            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+            value={loanStart}
+            onChange={(e) => setLoanStart(e.target.value)}
+          />
+
+          <label className="block text-sm font-medium text-gray-300">Monthly Payment ($)</label>
+          <input
+            type="number"
+            placeholder="Monthly Payment ($)"
+            className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+            value={manualMonthlyPayment}
+            onChange={(e) => setManualMonthlyPayment(e.target.value)}
+          />
+
+          <p className="text-sm text-gray-400 italic">
+            Est. Monthly: {loanAmount && loanLength ? `$${estimatedLoanMonthly}` : "—"}
+          </p>
+        </>
+      )}
+
+      {/* Save button for Ownership Info */}
+      <button
+        onClick={handleSaveOwnership}
+        className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+      >
+        Save Ownership Info
+      </button>
+    </div>
+  )}
+</div>
+
+
+</div>
+
                 </div>
+                {/* Cash Flow Chart */}
+<div className="w-full max-w-4xl mt-10">
+  <h4 className="mb-2 text-lg font-semibold text-white text-center">
+    Average Monthly Cash Flow Sankey
+  </h4>
+  {(() => {
+    const categories = [
+      "Repair",
+      "Scheduled Maintenance",
+      "Cosmetic Mods",
+      "Performance Mods",
+      "Paperwork & Taxes",
+    ];
+
+    // Build sums per month & average
+    const now = new Date();
+    const monthlyMap = {};
+    receipts.forEach((r) => {
+      const date = r.date?.seconds
+        ? new Date(r.date.seconds * 1000)
+        : new Date(r.date || now);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+      if (!monthlyMap[key]) {
+        monthlyMap[key] = {};
+        categories.forEach((cat) => (monthlyMap[key][cat] = 0));
+      }
+      if (categories.includes(r.category)) {
+        monthlyMap[key][r.category] += Number(r.price) || 0;
+      }
+    });
+    const monthKeys = Object.keys(monthlyMap);
+    const avgData = {};
+    categories.forEach((cat) => {
+      const total = monthKeys.reduce((sum, m) => sum + (monthlyMap[m][cat] || 0), 0);
+      avgData[cat] = total / Math.max(monthKeys.length, 1);
+    });
+
+    // Pull insurance & loan
+    const monthlyInsurance = Number(vehicle?.insuranceInfo?.monthly || 0);
+    const monthlyLoan = Number(vehicle?.ownershipInfo?.monthly || 0);
+
+    // Build Sankey nodes & links
+    const links = [];
+    const nodes = [{ name: "Total Expenses", color: "#374151" }];
+
+    const colorMap = {
+      "Repair": "#ef4444",
+      "Scheduled Maintenance": "#f59e0b",
+      "Cosmetic Mods": "#10b981",
+      "Performance Mods": "#3b82f6",
+      "Paperwork & Taxes": "#8b5cf6",
+      "Insurance": "#06b6d4",
+      "Loan Payment": "#9333ea",
+    };
+
+    categories.forEach((cat) => {
+      const value = avgData[cat];
+      if (value > 0) {
+        nodes.push({ name: `${cat}: $${value.toFixed(0)}`, color: colorMap[cat] });
+        links.push({ source: 0, target: nodes.length - 1, value });
+      }
+    });
+
+    if (monthlyInsurance > 0) {
+      nodes.push({ name: `Insurance: $${monthlyInsurance.toFixed(0)}`, color: colorMap["Insurance"] });
+      links.push({ source: 0, target: nodes.length - 1, value: monthlyInsurance });
+    }
+
+    if (monthlyLoan > 0) {
+      nodes.push({ name: `Loan Payment: $${monthlyLoan.toFixed(0)}`, color: colorMap["Loan Payment"] });
+      links.push({ source: 0, target: nodes.length - 1, value: monthlyLoan });
+    }
+
+    return links.length > 0 ? (
+      <ResponsiveContainer width="100%" height={350}>
+        <Sankey
+          data={{ nodes, links }}
+          nodePadding={30}
+          margin={{ top: 20, bottom: 20 }}
+          link={{ stroke: "#9ca3af", strokeWidth: 15, opacity: 0.7 }}
+          node={{
+            stroke: "#fff",
+            fill: (node) => node.color,
+            label: {
+              position: "right",
+              fill: "#f9fafb",
+              fontSize: 14,
+              fontWeight: 500,
+            },
+          }}
+        >
+          <RechartsTooltip
+            formatter={(value) => [`$${Number(value).toFixed(2)}`, "Amount"]}
+            contentStyle={{ backgroundColor: "#111827", borderColor: "#4b5563" }}
+            labelStyle={{ color: "#f9fafb" }}
+          />
+        </Sankey>
+      </ResponsiveContainer>
+    ) : (
+      <p className="text-sm text-gray-400 text-center italic">
+        No expense data available to build Sankey.
+      </p>
+    );
+  })()}
+</div>
+
+
+
                 {/* End Finance Section */}
 
                 {/* Actions */}

@@ -16,6 +16,31 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
+import { PieChart, Pie, Cell, Legend, Tooltip } from "recharts";
+
+// Compute data from vehicle receipts
+const expenseCategories = [
+  "Repair",
+  "Scheduled Maintenance",
+  "Cosmetic Mods",
+  "Performance Mods",
+  "Paperwork & Taxes",
+];
+
+const data = expenseCategories.map((category) => ({
+  name: category,
+  value: veh.receipts
+    .filter((r) => r.category === category)
+    .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
+}));
+
+const COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#ff7300", "#00c49f"];
+
+const purchasePrice = Number(veh.boughtAt || 0);
+const receiptsTotal = data.reduce((acc, item) => acc + item.value, 0);
+const totalCost = receiptsTotal + purchasePrice;
+
+
 export default function MyGarage() {
   const router = useRouter();
 
@@ -325,49 +350,42 @@ export default function MyGarage() {
                             <strong>Transmission:</strong> {veh.transmission}
                           </p>
                         </div>
-                        <div className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
-                          <h4 className="mb-1 font-semibold">Expenses</h4>
-                          {/* Purchase price line */}
-                          <div className="flex justify-between">
-                            <span>Purchase price:</span>
-                            <span>${Number(veh.boughtAt || 0).toFixed(2)}</span>
-                          </div>
-                          {/* Repair */}
-                          <div className="flex justify-between">
-                            <span>Repair:</span>
-                            <span>${veh.receipts.filter(r => r.category === 'Repair').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
-                          </div>
-                          {/* Scheduled Maintenance */}
-                          <div className="flex justify-between">
-                            <span>Scheduled Maintenance:</span>
-                            <span>${veh.receipts.filter(r => r.category === 'Scheduled Maintenance').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
-                          </div>
-                          {/* Cosmetic Mods */}
-                          <div className="flex justify-between">
-                            <span>Cosmetic Mods:</span>
-                            <span>${veh.receipts.filter(r => r.category === 'Cosmetic Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
-                          </div>
-                          {/* Performance Mods (keep only this one after Cosmetic Mods) */}
-                          <div className="flex justify-between">
-                            <span>Performance Mods:</span>
-                            <span>${veh.receipts.filter(r => r.category === 'Performance Mods').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
-                          </div>
-                          {/* Paperwork & Taxes */}
-                          <div className="flex justify-between">
-                            <span>Paperwork & Taxes:</span>
-                            <span>${veh.receipts.filter(r => r.category === 'Paperwork & Taxes').reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}</span>
-                          </div>
-                          {/* Total expenses (italic) */}
-                          <div className="flex justify-between italic">
-                            <span>Total expenses:</span>
-                            <span>${receiptsTotal.toFixed(2)}</span>
-                          </div>
-                          {/* Total Spent */}
-                          <div className="flex justify-between mt-2 font-semibold text-purple-400">
-                            <span>Total Spent:</span>
-                            <span>${totalCost.toFixed(2)}</span>
-                          </div>
-                        </div>
+<div className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
+  <h4 className="mb-2 font-semibold text-white">Expenses Overview</h4>
+  <div className="flex justify-center">
+    <PieChart width={320} height={220}>
+      <Pie
+        data={data}
+        cx="50%"
+        cy="50%"
+        labelLine={false}
+        outerRadius={80}
+        dataKey="value"
+        nameKey="name"
+      >
+        {data.map((_, index) => (
+          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        ))}
+      </Pie>
+      <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+      <Legend />
+    </PieChart>
+  </div>
+  <div className="mt-4 text-center text-sm">
+    <p>
+      <span className="font-medium">Purchase Price:</span>{" "}
+      ${purchasePrice.toFixed(2)}
+    </p>
+    <p>
+      <span className="font-medium">Total Expenses:</span>{" "}
+      ${receiptsTotal.toFixed(2)}
+    </p>
+    <p className="mt-1 font-semibold text-purple-400">
+      Total Spent: ${totalCost.toFixed(2)}
+    </p>
+  </div>
+</div>
+
 
                       <div className="flex flex-col gap-2 mt-4 md:flex-row md:justify-between">
                         <button
