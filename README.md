@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+MyRide 🚗
+MyRide est une plateforme web innovante permettant de gérer, suivre et comparer vos véhicules (voitures, motos...) au quotidien, que vous soyez passionné(e), collectionneur(se) ou tout simplement propriétaire.
 
-## Getting Started
+🚀 Fonctionnalités principales
+Ajout et gestion de véhicules (voiture, moto...)
 
-First, run the development server:
+Fiche détaillée par véhicule : photos, caractéristiques techniques, historique des dépenses, courbes de suivi
 
-```bash
+Marketplace : découvrez ou proposez des véhicules à la vente
+
+Comparaison de véhicules (à venir)
+
+Interface responsive (PC, tablette, mobile)
+
+Sécurité et authentification via Firebase
+
+🛠️ Technologies utilisées
+Next.js (React)
+
+Firebase (Firestore, Auth, Storage, Functions)
+
+Tailwind CSS
+
+TypeScript
+
+Framer Motion (animations)
+
+Recharts (graphiques dynamiques)
+
+Node.js (scripts de génération de données)
+
+🔥 Aperçu
+(Ajoute ici une ou deux captures d’écran, ou un gif si tu en as !)
+
+Ajout d’un véhicule	Fiche véhicule	Marketplace
+
+🚦 Comment démarrer ?
+Clone le projet :
+
+bash
+Copier
+Modifier
+git clone https://github.com/QuentinBonzom/MyRide.git
+cd MyRide
+Installe les dépendances :
+
+bash
+Copier
+Modifier
+npm install
+Configure Firebase :
+
+Crée un projet sur Firebase
+
+Ajoute ton fichier firebaseConfig dans /src/config
+
+Active Auth, Firestore, Storage et Functions si besoin
+
+Lance le projet :
+
+bash
+Copier
+Modifier
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Profite ! 🚙
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+📄 Fonctionnalités à venir
+Comparaison avancée de véhicules
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Gestion d’un historique d’entretien
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Rappels automatiques (contrôle technique, assurance...)
 
-## Learn More
+Exports de données et visualisations
 
-To learn more about Next.js, take a look at the following resources:
+Application mobile (React Native)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Multilingue (FR/EN)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+🤝 Contribution
+Les PR sont les bienvenues !
+Merci de lire le CONTRIBUTING.md et d’ouvrir une issue pour discuter d’une fonctionnalité avant de démarrer.
 
-## Deploy on Vercel
+🧑‍💻 Auteur
+Quentin Bonzom
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+📜 Licence
+Ce projet est sous licence MIT.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+⭐️ N’hésite pas à mettre une étoile au repo si le projet te plaît !
+
