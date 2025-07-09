@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { auth, db, storage } from "../../lib/firebase";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import {
   doc,
   getDoc,
@@ -675,6 +676,22 @@ export default function VehicleCardPage() {
   const [selectedItem, setSelectedItem] = useState("Total Spent");
   // Added state for enlarged image index
   const [enlargedIdx, setEnlargedIdx] = useState(null);
+  // for charges
+    const [showInsurance, setShowInsurance] = useState(false);
+  const [insuranceCost, setInsuranceCost] = useState(0);
+  const [insuranceLength, setInsuranceLength] = useState(0);
+  const [insuranceStart, setInsuranceStart] = useState("");
+  const [manualInsuranceMonthly, setManualInsuranceMonthly] = useState("");
+
+
+
+  const [showOwnership, setShowOwnership] = useState(false);
+  const [ownershipType, setOwnershipType] = useState("");
+  const [loanAmount, setLoanAmount] = useState(0);
+  const [loanLength, setLoanLength] = useState(0);
+  const [interestRate, setInterestRate] = useState(0);
+  const [loanStart, setLoanStart] = useState("");
+  const [manualMonthlyPayment, setManualMonthlyPayment] = useState("");
   // Add state definition for marketplace modal:
   const [showMarketplaceModal, setShowMarketplaceModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -899,6 +916,55 @@ export default function VehicleCardPage() {
       });
     }
   }, [vehicle, editMode]);
+
+    const handleSaveInsurance = async () => {
+  if (!id) {
+    console.error("No vehicle ID");
+    return;
+  }
+  const insuranceData = {
+    insuranceCost,
+    insuranceLength,
+    insuranceStart,
+    manualInsuranceMonthly,
+  };
+
+  const docRef = doc(db, "listing", id); // use id here!
+
+  try {
+    await updateDoc(docRef, {
+      insuranceInfo: insuranceData,
+    });
+    setShowInsurance(false);
+  } catch (err) {
+    console.error("Failed to save insurance info:", err);
+  }
+};
+const handleSaveOwnership = async () => {
+  if (!id) {
+    console.error("No vehicle ID");
+    return;
+  }
+  const ownershipData = {
+    ownershipType,
+    loanAmount,
+    loanLength,
+    interestRate,
+    loanStart,
+    manualMonthlyPayment,
+  };
+
+  const docRef = doc(db, "listing", id); // use id here!
+
+  try {
+    await updateDoc(docRef, {
+      ownershipInfo: ownershipData,
+    });
+    setShowOwnership(false);
+  } catch (err) {
+    console.error("Failed to save ownership info:", err);
+  }
+};
 
   const handleFormChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -2334,10 +2400,9 @@ export default function VehicleCardPage() {
           </div>
         </div>
 
-        {/* Finance section */}
-        <section className="p-0 pt-4">
-          <HorizontalCardsWithDots
-            cards={[
+<section className="p-0 pt-4">
+  <HorizontalCardsWithDots
+    cards={[
               // Card 1: Finance/AI Value
               <div
                 key="finance-1"
@@ -2431,6 +2496,10 @@ export default function VehicleCardPage() {
                   </button>
                 </div>
               </div>,
+              // Card 2 : Camembert chart
+
+
+
               // Card 2: Vehicle Financial Breakdown & Depreciation
               <div
                 key="finance-2"
@@ -2902,9 +2971,303 @@ export default function VehicleCardPage() {
                   </p>
                 </div>
               </div>,
-            ]}
-          />
-        </section>
+
+      // Card 6: Monthly Budget Overview
+      <div key="monthly_box" className="flex flex-col items-center justify-center mt-8">
+        <h4 className="mb-2 text-lg font-semibold text-white">Monthly Budget Overview</h4>
+        {(() => {
+          let months = 1;
+          if (vehicle.createdAt) {
+            const created = vehicle.createdAt.seconds
+              ? new Date(vehicle.createdAt.seconds * 1000)
+              : new Date(vehicle.createdAt);
+            const now = new Date();
+            months =
+              (now.getFullYear() - created.getFullYear()) * 12 +
+              (now.getMonth() - created.getMonth()) +
+              1;
+            if (months < 1) months = 1;
+          }
+
+          const expenseCategories = [
+            "Repair",
+            "Scheduled Maintenance",
+            "Cosmetic Mods",
+            "Performance Mods",
+            "Paperwork & Taxes",
+          ];
+
+          const monthlyData = expenseCategories.map((category) => {
+            const total = receipts
+              .filter((r) => r.category === category)
+              .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+            return {
+              name: category,
+              value: total / months,
+            };
+          });
+
+          const ownershipInfo = vehicle.ownershipInfo || {};
+          const insuranceInfo = vehicle.insuranceInfo || {};
+
+          const credit = ownershipInfo.manualMonthlyPayment ?? null;
+          const insurance = insuranceInfo.manualInsuranceMonthly ?? null;
+          const gas = vehicle.gas ?? null;
+
+          const totalMonthly =
+            monthlyData.reduce((sum, item) => sum + item.value, 0) +
+            (typeof credit === "number" ? credit : 0) +
+            (typeof insurance === "number" ? insurance : 0) +
+            (typeof gas === "number" ? gas : 0);
+
+          return (
+            <>
+              <div className="flex flex-wrap gap-4 justify-center items-stretch w-full max-w-2xl">
+                {monthlyData.map((item) => (
+                  <div
+                    key={item.name}
+                    className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]"
+                  >
+                    <span className="text-sm text-gray-400">{item.name}</span>
+                    <span className="text-xl font-bold text-green-400">
+                      ${item.value.toFixed(2)}
+                    </span>
+                    <span className="text-xs text-gray-500">/month</span>
+                  </div>
+                ))}
+
+                {/* Credit */}
+                <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                  <span className="text-sm text-gray-400">Credit</span>
+                  <span className="text-xl font-bold text-blue-400">
+                    {typeof credit === "number" ? `$${credit.toFixed(2)}` : "—"}
+                  </span>
+                  <span className="text-xs text-gray-500">/month</span>
+                </div>
+
+                {/* Insurance */}
+                <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                  <span className="text-sm text-gray-400">Insurance</span>
+                  <span className="text-xl font-bold text-purple-400">
+                    {typeof insurance === "number" ? `$${insurance.toFixed(2)}` : "—"}
+                  </span>
+                  <span className="text-xs text-gray-500">/month</span>
+                </div>
+
+                {/* Gas */}
+                <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                  <span className="text-sm text-gray-400">Gas</span>
+                  <span className="text-xl font-bold text-yellow-400">
+                    {typeof gas === "number" ? `$${gas.toFixed(2)}` : (
+                      <span className="italic text-gray-500">(coming soon)</span>
+                    )}
+                  </span>
+                  <span className="text-xs text-gray-500">/month</span>
+                </div>
+              </div>
+
+              {/* Total Monthly Budget */}
+              <div className="mt-4 text-lg text-white font-semibold">
+                In average, you spend{" "}
+                <span className="text-green-400">${totalMonthly.toFixed(2)} </span>
+                on this vehicle
+              </div>
+            </>
+          );
+        })()}
+      </div>,
+
+      // Card 7: Update Financial Details
+      <div key="charges_setup" className="mt-10 w-full max-w-xl mx-auto text-white space-y-6">
+        <h4 className="text-lg font-semibold text-center">Update Financial Details</h4>
+        
+        {/* Insurance Info */}
+        <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
+          <h5 className="mb-2 text-md font-semibold">🛡️ Insurance Info</h5>
+          <button
+            onClick={() => setShowInsurance(true)}
+            className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+          >
+            Update Insurance
+          </button>
+
+          {showInsurance && (
+            <div className="mt-4 space-y-2">
+              <label className="block text-sm font-medium text-gray-300">Total Insurance Cost ($)</label>
+              <input
+                type="number"
+                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                value={insuranceCost}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setInsuranceCost(val);
+                  const est = insuranceLength > 0 ? (val / insuranceLength).toFixed(2) : "";
+                  if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
+                    setManualInsuranceMonthly(est);
+                  }
+                }}
+              />
+
+              <label className="block text-sm font-medium text-gray-300">Length (months)</label>
+              <input
+                type="number"
+                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                value={insuranceLength}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setInsuranceLength(val);
+                  const est = val > 0 ? (insuranceCost / val).toFixed(2) : "";
+                  if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
+                    setManualInsuranceMonthly(est);
+                  }
+                }}
+              />
+
+              <label className="block text-sm font-medium text-gray-300">Start Date</label>
+              <input
+                type="date"
+                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                value={insuranceStart}
+                onChange={(e) => setInsuranceStart(e.target.value)}
+              />
+
+              <label className="block text-sm font-medium text-gray-300">Monthly Insurance Payment ($)</label>
+              <input
+                type="number"
+                className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+                value={manualInsuranceMonthly}
+                onChange={(e) => setManualInsuranceMonthly(e.target.value)}
+              />
+
+              <p className="text-sm text-gray-400 italic">
+                Monthly: {insuranceLength > 0 ? `$${(insuranceCost / insuranceLength).toFixed(2)}` : "—"}
+              </p>
+
+              <button
+                onClick={handleSaveInsurance}
+                className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+              >
+                Save Insurance Info
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Ownership Info */}
+        <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
+          <h5 className="mb-2 text-md font-semibold">💰 Ownership Info</h5>
+          <button
+            onClick={() => setShowOwnership(true)}
+            className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+          >
+            Update Ownership
+          </button>
+
+          {showOwnership && (
+            <div className="mt-4 space-y-2">
+              <label className="block text-sm font-medium text-gray-300">Ownership Type</label>
+              <select
+                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                value={ownershipType}
+                onChange={(e) => setOwnershipType(e.target.value)}
+              >
+                <option value="">Select Type</option>
+                <option value="Owned">Owned</option>
+                <option value="Financed">Financed</option>
+              </select>
+
+              {ownershipType === "Financed" && (
+                <>
+                  <label className="block text-sm font-medium text-gray-300">Loan Amount ($)</label>
+                  <input
+                    type="number"
+                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                    value={loanAmount}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setLoanAmount(val);
+                      const est =
+                        val && loanLength
+                          ? ((val * (1 + (interestRate || 0) / 100)) / loanLength).toFixed(2)
+                          : "";
+                      if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                        setManualMonthlyPayment(est);
+                      }
+                    }}
+                  />
+
+                  <label className="block text-sm font-medium text-gray-300">Length (months)</label>
+                  <input
+                    type="number"
+                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                    value={loanLength}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setLoanLength(val);
+                      const est =
+                        loanAmount && val
+                          ? ((loanAmount * (1 + (interestRate || 0) / 100)) / val).toFixed(2)
+                          : "";
+                      if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                        setManualMonthlyPayment(est);
+                      }
+                    }}
+                  />
+
+                  <label className="block text-sm font-medium text-gray-300">Interest Rate (%)</label>
+                  <input
+                    type="number"
+                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                    value={interestRate}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setInterestRate(val);
+                      const est =
+                        loanAmount && loanLength
+                          ? ((loanAmount * (1 + (val || 0) / 100)) / loanLength).toFixed(2)
+                          : "";
+                      if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                        setManualMonthlyPayment(est);
+                      }
+                    }}
+                  />
+
+                  <label className="block text-sm font-medium text-gray-300">Start Date</label>
+                  <input
+                    type="date"
+                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                    value={loanStart}
+                    onChange={(e) => setLoanStart(e.target.value)}
+                  />
+
+                  <label className="block text-sm font-medium text-gray-300">Monthly Payment ($)</label>
+                  <input
+                    type="number"
+                    className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+                    value={manualMonthlyPayment}
+                    onChange={(e) => setManualMonthlyPayment(e.target.value)}
+                  />
+
+                  <p className="text-sm text-gray-400 italic">
+                    Est. Monthly: {loanAmount && loanLength ? `$${estimatedLoanMonthly}` : "—"}
+                  </p>
+                </>
+              )}
+
+              <button
+                onClick={handleSaveOwnership}
+                className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+              >
+                Save Ownership Info
+              </button>
+            </div>
+          )}
+        </div>
+      </div>,
+    ]}
+  />
+</section>
+
 
         {/* Receipt Form Modal */}
         {showReceiptForm && (
