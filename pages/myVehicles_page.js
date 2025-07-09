@@ -1,4 +1,4 @@
-// pages/MyGarage.js
+// pages/MyGarage.js code pour vehicleCard_page.js, à juste copier/coller !
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { auth, db, storage } from "../lib/firebase";
@@ -15,6 +15,7 @@ import { ref, listAll, getDownloadURL, deleteObject } from "firebase/storage";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 export default function MyGarage() {
   const router = useRouter();
@@ -50,65 +51,17 @@ export default function MyGarage() {
           return sum;
         }, 0);
       case "Garage's total cost":
-        // Ajoute tous les coûts renseignés lors de l'ajout du véhicule + reçus
-        return vehicles.reduce(
-          (sum, veh) =>
-            sum +
-            (Number(veh.boughtAt) || 0) +
-            Number(veh.withoutPurchasePrice) +
-            Number(veh.repairCost) +
-            Number(veh.scheduledMaintenance) +
-            Number(veh.cosmeticMods) +
-            Number(veh.performanceMods) +
-            veh.receipts.reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
-          0
-        );
+        return vehicles.reduce((sum, veh) => sum + (Number(veh.boughtAt) || 0) + veh.receipts.reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
       case "Garage's purchase cost":
-        return vehicles.reduce(
-          (sum, veh) => sum + (Number(veh.boughtAt) || 0),
-          0
-        );
+        return vehicles.reduce((sum, veh) => sum + (Number(veh.boughtAt) || 0), 0);
       case "Cost in Repair":
-        // Ajoute la valeur renseignée + reçus de type Repair
-        return vehicles.reduce(
-          (sum, veh) =>
-            sum +
-            Number(veh.repairCost) +
-            veh.receipts
-              .filter((r) => r.category === "Repair")
-              .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
-          0
-        );
+        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Repair').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
       case "Cost in Scheduled Maintenance":
-        return vehicles.reduce(
-          (sum, veh) =>
-            sum +
-            Number(veh.scheduledMaintenance) +
-            veh.receipts
-              .filter((r) => r.category === "Scheduled Maintenance")
-              .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
-          0
-        );
+        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Scheduled Maintenance').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
       case "Cost in Cosmetic Mods":
-        return vehicles.reduce(
-          (sum, veh) =>
-            sum +
-            Number(veh.cosmeticMods) +
-            veh.receipts
-              .filter((r) => r.category === "Cosmetic Mods")
-              .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
-          0
-        );
+        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Cosmetic Mods').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
       case "Cost in Performance Mods":
-        return vehicles.reduce(
-          (sum, veh) =>
-            sum +
-            Number(veh.performanceMods) +
-            veh.receipts
-              .filter((r) => r.category === "Performance Mods")
-              .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
-          0
-        );
+        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Performance Mods').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
       default:
         return 0;
     }
@@ -160,7 +113,7 @@ export default function MyGarage() {
                       title: vData.title, // Add title
                       vehicleId: id, // Add vehicleId
                     }),
-                  });
+                  }); 
 
                   if (!response.ok) {
                     console.error("Failed to fetch AI estimation");
@@ -173,9 +126,7 @@ export default function MyGarage() {
                   const urls = await Promise.all(
                     files.items.map((f) => getDownloadURL(f))
                   );
-                  const images = urls.filter(
-                    (u) => !u.includes("vehicleVideo")
-                  );
+                  const images = urls.filter((u) => !u.includes("vehicleVideo"));
 
                   // Fetch receipts
                   const rSnap = await getDocs(
@@ -183,29 +134,7 @@ export default function MyGarage() {
                   );
                   const receipts = rSnap.docs.map((d) => d.data());
 
-                  // Correction: Ajoute les champs de coût renseignés lors de l'ajout du véhicule
-                  // (repairCost, scheduledMaintenance, cosmeticMods, performanceMods, withoutPurchasePrice)
-                  // et les injecte dans le calcul d'affichage
-                  const repairCost = Number(vData.repairCost) || 0;
-                  const scheduledMaintenance =
-                    Number(vData.scheduledMaintenance) || 0;
-                  const cosmeticMods = Number(vData.cosmeticMods) || 0;
-                  const performanceMods = Number(vData.performanceMods) || 0;
-                  const withoutPurchasePrice =
-                    Number(vData.withoutPurchasePrice) || 0;
-
-                  return {
-                    id,
-                    ...vData,
-                    images,
-                    receipts,
-                    // Ajout explicite pour usage plus simple dans l'affichage
-                    repairCost,
-                    scheduledMaintenance,
-                    cosmeticMods,
-                    performanceMods,
-                    withoutPurchasePrice,
-                  };
+                  return { id, ...vData, images, receipts };
                 })
               );
               setVehicles(list.filter(Boolean));
@@ -245,31 +174,19 @@ export default function MyGarage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center flex-1 min-h-screen bg-zinc-900">
-        <div className="flex space-x-4">
-          <motion.span
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 0.6 }}
-            className="block w-4 h-4 bg-purple-500 rounded-full"
-          />
-          <motion.span
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-            className="block w-4 h-4 bg-purple-500 rounded-full"
-          />
-          <motion.span
-            animate={{ y: [0, -10, 0] }}
-            transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-            className="block w-4 h-4 bg-purple-500 rounded-full"
-          />
-        </div>
+      <div className="flex items-center justify-center flex-1 min-h-screen text-gray-300 bg-gray-900">
+        <motion.span
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 1 }}
+          className="block w-8 h-8 border-4 border-purple-500 rounded-full border-t-transparent"
+        />
       </div>
     );
   }
 
   return (
     <div className="flex flex-col min-h-screen text-white bg-zinc-900 ">
-      <main className="relative flex-1 p-6 ">
+      <main className="relative flex-1 p-6 pt-32">
         {showModal && !isAuthenticated && (
           <div className="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-75">
             <motion.div
@@ -315,53 +232,48 @@ export default function MyGarage() {
         >
           {isAuthenticated ? `${firstName}'s Garage` : "My Garage"}
         </motion.h1>
-        <div className="relative w-full max-w-md mx-auto mb-8 text-center">
+        <div className="w-full max-w-md mx-auto mb-8 text-center">
           <div className="flex items-center justify-center space-x-2">
             <p className="text-sm text-gray-500">{sumType}</p>
-            <div className="relative inline-block">
-              <button
-                onClick={() => setDropdownOpen((prev) => !prev)}
-                className="p-1 transition rounded-full hover:bg-white/20"
-                title="Select Sum Type"
+            <button
+              onClick={() => setDropdownOpen((prev) => !prev)}
+              className="p-1 hover:bg-gray-100 rounded-full transition"
+              title="Select Sum Type"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="w-5 h-5"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-5 h-5"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="m19.5 8.25-7.5 7.5-7.5-7.5"
-                  />
-                </svg>
-              </button>
-              {dropdownOpen && (
-                <div className="absolute z-20 w-56 mt-2 text-sm bg-white border border-gray-400 rounded-md shadow-lg -left-36">
-                  {sumOptions.map((option) => (
-                    <button
-                      key={option}
-                      onClick={() => handleSumTypeSelect(option)}
-                      className={`block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-800 ${
-                        sumType === option
-                          ? "font-bold text-purple-700 bg-purple-50"
-                          : ""
-                      }`}
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+              </svg>
+            </button>
           </div>
-          <div className="flex items-center justify-center mt-2">
-            <p className="text-5xl font-extrabold">
-              ${Number(calculateGarageSum(sumType)).toFixed(2)}
+          <div>
+            <p className="text-xs text-gray-500 italic">
+              This estimation is provided for informational purposes only and is not legally binding or official documentation.
             </p>
+          </div>
+          {dropdownOpen && (
+            <div className="absolute mt-2 w-48 bg-white shadow-lg rounded-md border border-gray-200 z-10 text-sm">
+              {sumOptions.map((option) => (
+                <button
+                  key={option}
+                  onClick={() => handleSumTypeSelect(option)}
+                  className={`block w-full text-left px-4 py-2 text-gray-600 hover:bg-gray-100 ${
+                    sumType === option ? "font-bold text-purple-700" : ""
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="flex items-center justify-center mt-2">
+            <p className="text-5xl font-extrabold">${Number(calculateGarageSum(sumType)).toFixed(2)}</p>
           </div>
         </div>
         <motion.div
@@ -372,120 +284,124 @@ export default function MyGarage() {
           {isAuthenticated ? (
             <>
               {vehicles.map((veh) => {
-                // Calculate expenses by category from receipts
-                const getCategoryTotal = (cat) =>
-                  veh.receipts
-                    .filter((r) => r.category === cat)
-                    .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
 
                 const receiptsTotal = veh.receipts.reduce(
-                  (sum, r) => sum + (Number(r.price) || 0),
+                  (s, r) => s + (Number(r.price) || 0),
                   0
                 );
-
-                // Total Spent = purchase price + all receipts
-                const totalCost =
-                  (Number(veh.boughtAt) || 0) + receiptsTotal;
+                const totalCost = receiptsTotal + (Number(veh.boughtAt) || 0); // Include purchase price
 
                 return (
+                  
                   <motion.div
-                    key={veh.id}
-                    className="overflow-hidden bg-gray-800 shadow-lg cursor-pointer rounded-xl hover:shadow-2xl"
-                    onClick={() => openVehicle(veh.id)}
-                  >
-                    <div className="grid h-48 grid-cols-2 gap-1">
-                      {veh.images.slice(0, 4).map((img, idx) => (
-                        <div key={idx} className="relative w-full h-24">
-                          <Image
-                            src={img}
-                            alt={veh.make}
-                            fill
-                            className="object-cover"
-                          />
+      key={veh.id}
+      className="overflow-hidden bg-gray-800 shadow-lg rounded-xl hover:shadow-2xl cursor-pointer"
+      onClick={() => openVehicle(veh.id)}
+    >
+      <div className="grid h-48 grid-cols-2 gap-1">
+        {veh.images.slice(0, 4).map((img, idx) => (
+          <div key={idx} className="relative w-full h-24">
+            <Image
+              src={img}
+              alt={veh.make}
+              fill
+              className="object-cover"
+            />
+          </div>
+        ))}
+      </div>
+      <div className="p-4">
+        <h3 className="mb-2 text-xl font-bold">
+          {veh.year} {veh.make} {veh.model}
+        </h3>
+          <div className="grid grid-cols-2 text-sm text-gray-300 gap-x-4">
+                          <p>
+                            <strong>Color:</strong> {veh.color}
+                          </p>
+                          <p>
+                            <strong>Mileage:</strong> {veh.mileage} miles
+                          </p>
+                          <p>
+                            <strong>Power:</strong> {veh.horsepower} HP
+                          </p>
+                          <p>
+                            <strong>Fuel:</strong> {veh.fuelType}
+                          </p>
+                          <p>
+                            <strong>Transmission:</strong> {veh.transmission}
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                    <div className="p-4">
-                      <h3 className="mb-2 text-xl font-bold">
-                        {veh.year} {veh.make} {veh.model}
-                      </h3>
-                      <div className="grid grid-cols-2 text-sm text-gray-300 gap-x-4">
-                        <p>
-                          <strong>Color:</strong> {veh.color}
-                        </p>
-                        <p>
-                          <strong>Mileage:</strong> {veh.mileage} miles
-                        </p>
-                        <p>
-                          <strong>Power:</strong> {veh.horsepower} HP
-                        </p>
-                        <p>
-                          <strong>Fuel:</strong> {veh.fuelType}
-                        </p>
-                        <p>
-                          <strong>Transmission:</strong> {veh.transmission}
-                        </p>
-                      </div>
                       <div className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
-                        <h4 className="mb-1 font-semibold">Expenses</h4>
-                        {/* Purchase price line */}
-                        <div className="flex justify-between">
-                          <span>Purchase price:</span>
-                          <span>${Number(veh.boughtAt || 0).toFixed(2)}</span>
+                        <h4 className="mb-2 font-semibold text-white">Expenses Overview</h4>
+
+                        <div className="flex justify-center gap-6">
+                          {(() => {
+                            const expenseCategories = [
+                              "Repair",
+                              "Scheduled Maintenance",
+                              "Cosmetic Mods",
+                              "Performance Mods",
+                              "Paperwork & Taxes",
+                            ];
+                            const data = expenseCategories.map((category) => ({
+                              name: category,
+                              value: veh.receipts
+                                .filter((r) => r.category === category)
+                                .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
+                            }));
+                            const COLORS = [
+                              "#7c3aed", // violet-600
+                              "#9333ea", // violet-700
+                              "#a78bfa", // violet-300
+                              "#c4b5fd", // violet-200
+                              "#ede9fe", // violet-50
+                            ];
+                            return (
+                              <PieChart width={400} height={220}>
+                                <Pie
+                                  data={data}
+                                  cx={120}
+                                  cy={110}
+                                  outerRadius={80}
+                                  labelLine={false}
+                                  dataKey="value"
+                                  nameKey="name"
+                                >
+                                  {data.map((_, index) => (
+                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                  ))}
+                                </Pie>
+                                <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                                <Legend layout="vertical" align="right" verticalAlign="middle" />
+                              </PieChart>
+                            );
+                          })()}
                         </div>
-                        {/* Repair */}
-                        <div className="flex justify-between">
-                          <span>Repair:</span>
-                          <span>
-                            ${getCategoryTotal('Repair').toFixed(2)}
-                          </span>
-                        </div>
-                        {/* Scheduled Maintenance */}
-                        <div className="flex justify-between">
-                          <span>Scheduled Maintenance:</span>
-                          <span>
-                            ${getCategoryTotal('Scheduled Maintenance').toFixed(2)}
-                          </span>
-                        </div>
-                        {/* Cosmetic Mods */}
-                        <div className="flex justify-between">
-                          <span>Cosmetic Mods:</span>
-                          <span>
-                            ${getCategoryTotal('Cosmetic Mods').toFixed(2)}
-                          </span>
-                        </div>
-                        {/* Performance Mods */}
-                        <div className="flex justify-between">
-                          <span>Performance Mods:</span>
-                          <span>
-                            ${getCategoryTotal('Performance Mods').toFixed(2)}
-                          </span>
-                        </div>
-                        {/* Paperwork & Taxes */}
-                        <div className="flex justify-between">
-                          <span>Paperwork & Taxes:</span>
-                          <span>
-                            ${getCategoryTotal('Paperwork & Taxes').toFixed(2)}
-                          </span>
-                        </div>
-                                                {/* Total expenses (italic) */}
-                        <div className="flex justify-between italic">
-                          <span>Total expenses:</span>
-                          <span>${receiptsTotal.toFixed(2)}</span>
-                        </div>
-                        {/* Total Spent */}
-                        <div className="flex justify-between mt-2 font-semibold text-purple-400">
-                          <span>Total Spent:</span>
-                          <span>${totalCost.toFixed(2)}</span>
+
+                        <div className="mt-4 text-center text-sm">
+                          <p>
+                            <span className="font-medium">Purchase Price:</span>{" "}
+                            ${Number(veh.boughtAt || 0).toFixed(2)}
+                          </p>
+                          <p>
+                            <span className="font-medium">Total Expenses:</span>{" "}
+                            ${receiptsTotal.toFixed(2)}
+                          </p>
+                          <p className="mt-1 font-semibold text-purple-400">
+                            Total Spent: ${totalCost.toFixed(2)}
+                          </p>
                         </div>
                       </div>
+
+
+
                       <div className="flex flex-col gap-2 mt-4 md:flex-row md:justify-between">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             openVehicle(veh.id);
                           }}
-                          className="px-10 py-2 button-main"
+                          className="button-main px-10 py-2"
                         >
                           View more
                         </button>
@@ -494,7 +410,7 @@ export default function MyGarage() {
                             e.stopPropagation();
                             deleteVehicle(veh.id);
                           }}
-                          className="px-10 py-2 font-medium text-gray-400 transition bg-transparent border border-gray-300 rounded-lg hover:border-red-400 hover:text-red-600"
+                          className="px-10 py-2 font-medium border border-gray-300 text-gray-400 bg-transparent rounded-lg hover:border-red-400 hover:text-red-600 transition"
                         >
                           Delete
                         </button>
@@ -533,8 +449,10 @@ export default function MyGarage() {
             ))
           )}
         </motion.div>
-        <div className="pb-16" /> {/* Ajoute un padding en bas de page */}
       </main>
+      <footer className="p-4 text-center text-gray-400 bg-gray-800">
+        © {new Date().getFullYear()} MyRide
+      </footer>
     </div>
   );
 }
