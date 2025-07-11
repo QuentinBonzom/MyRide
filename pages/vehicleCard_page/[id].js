@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/router";
 import { auth, db, storage } from "../../lib/firebase";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, ResponsiveContainer, Sankey,Cell, Tooltip, Legend } from "recharts";
 import {
   doc,
   getDoc,
@@ -109,6 +109,9 @@ const defaultOptions = {
     labels: { colors: "#f3f4f8" },
   },
 };
+
+// pour amazon
+// Move this state inside a React function component or custom hook
 
 // Icônes et catégories
 
@@ -219,6 +222,119 @@ function OwnerManualModal({ vehicleId, onClose, onSync }) {
     </div>
   );
 }
+
+const sankeyData = {
+  nodes: [
+    { name: "Total", color: "#7c3aed" },
+    { name: "Mods", color: "#9333ea" },
+    { name: "Charges", color: "#a78bfa" },
+    { name: "Repair", color: "#c4b5fd" },
+    { name: "Scheduled Maintenance", color: "#ede9fe" },
+    { name: "Paperwork & Taxes", color: "#f5f3ff" },
+    { name: "Cosmetic Mods", color: "#e9d5ff" },
+    { name: "Performance Mods", color: "#d8b4fe" },
+    { name: "Insurance", color: "#ddd6fe" },
+    { name: "Loan Payment", color: "#c084fc" },
+  ],
+  links: [
+    { source: 0, target: 1, value: 200, color: "#9333ea" },
+    { source: 0, target: 2, value: 300, color: "#a78bfa" },
+    { source: 0, target: 3, value: 100, color: "#c4b5fd" },
+    { source: 0, target: 4, value: 150, color: "#ede9fe" },
+    { source: 0, target: 5, value: 80, color: "#f5f3ff" },
+    { source: 1, target: 6, value: 120, color: "#e9d5ff" },
+    { source: 1, target: 7, value: 80, color: "#d8b4fe" },
+    { source: 2, target: 8, value: 180, color: "#ddd6fe" },
+    { source: 2, target: 9, value: 120, color: "#c084fc" },
+  ],
+};
+
+const getNodeValue = (index) => {
+  const out = sankeyData.links
+    .filter((l) => l.source === index)
+    .reduce((sum, l) => sum + l.value, 0);
+  const inc = sankeyData.links
+    .filter((l) => l.target === index)
+    .reduce((sum, l) => sum + l.value, 0);
+  return out > 0 ? out : inc;
+};
+
+const maxTargetValue = Math.max(
+  ...sankeyData.links.map((l) =>
+    sankeyData.links
+      .filter((link) => link.target === l.target)
+      .reduce((sum, link) => sum + link.value, 0)
+  ),
+  1
+);
+
+const renderCustomNode = ({ x, y, width, height, index }) => {
+  const node = sankeyData.nodes[index];
+  const value = getNodeValue(index);
+  return (
+    <g>
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={node?.color || "#888"}
+        stroke="#222"
+        strokeWidth={1}
+        rx={4}
+      />
+      <text
+        x={x + width / 2}
+        y={y + height / 2 - 6}
+        textAnchor="middle"
+        alignmentBaseline="middle"
+        fill="#222"
+        fontSize={8}
+        fontWeight="bold"
+      >
+        {node?.name}
+      </text>
+      <text
+        x={x + width / 2}
+        y={y + height / 2 + 10}
+        textAnchor="middle"
+        alignmentBaseline="middle"
+        fill="#444"
+        fontSize={6}
+      >
+        ${value}
+      </text>
+    </g>
+  );
+};
+
+const renderCustomLink = ({ sourceX, sourceY, targetX, targetY, value, index }) => {
+  const target = sankeyData.links[index]?.target;
+  const totalToTarget = sankeyData.links
+    .filter((link) => link.target === target)
+    .reduce((sum, link) => sum + link.value, 0);
+  const minW = 4,
+    maxW = 90;
+  const width = minW + ((totalToTarget / maxTargetValue) * (maxW - minW));
+  const path = `
+    M${sourceX},${sourceY}
+    C${(sourceX + targetX) / 2},${sourceY}
+     ${(sourceX + targetX) / 2},${targetY}
+     ${targetX},${targetY}
+  `;
+  return (
+    <g>
+      <path
+        d={path}
+        fill="none"
+        stroke={sankeyData.links[index]?.color || "#fff"}
+        strokeWidth={width}
+        opacity={0.7}
+      />
+    </g>
+  );
+};
+
 
 // ReceiptForm: update labels, placeholders, buttons, errors
 function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
@@ -655,6 +771,7 @@ function InfoTooltip({ text, children }) {
 
 // Composant principal
 export default function VehicleCardPage() {
+  const [showAmazonModal, setShowAmazonModal] = useState(false); // Moved here
   const router = useRouter();
   const [showInfo, setShowInfo] = useState(false);
   const { id } = router.query;
@@ -2029,43 +2146,158 @@ const handleSaveOwnership = async () => {
                 </svg>
               </button>
             </div>
-            <div className="rounded-xl bg-gradient-to-br from-neutral-900 to-neutral-800 border border-neutral-700 p-0.5">
-              <div className="flex flex-col gap-3 p-5 bg-neutral-900 rounded-xl">
-                {aiRec ? (
-                  <>
-                    {/* Ligne 1 : Urgence */}
-                    <div className="flex items-center gap-2">
-                      <span className="inline-block w-2 h-2 bg-pink-500 rounded-full animate-pulse"></span>
-                      <span className="text-lg font-semibold text-white">
-                        {aiRec.split("\n")[0]}
-                      </span>
-                    </div>
-                    {/* Ligne 2 : No history found */}
-                    {aiRec.split("\n")[1] && (
-                      <div className="flex items-start gap-2">
-                        <span className="inline-block w-2 h-2 mt-1 bg-yellow-400 rounded-full"></span>
-                        <span className="text-base text-neutral-300">
-                          {aiRec.split("\n")[1]}
-                        </span>
-                      </div>
+<div className="flex flex-col gap-6 p-5 bg-neutral-900 rounded-xl">
+  {aiRec ? (() => {
+    const lines = aiRec.split("\n").filter((l) => l.trim() !== "");
+
+    const urgencyLine = lines.find((l) =>
+      l.toLowerCase().includes("most urgent to come")
+    );
+    const noHistoryLine = lines.find((l) =>
+      l.toLowerCase().includes("no history found")
+    );
+    const gradeLine = lines.find((l) =>
+      l.toLowerCase().includes("maintenance grade")
+    );
+
+    // Find Amazon block start index
+    const amazonIndex = lines.findIndex((l) =>
+      l.toLowerCase().includes("best match on amazon")
+    );
+
+    // Default empty product info
+    let amazonText = "";
+    let amazonURL = "";
+    let amazonPrice = "";
+    let amazonImageUrl = "https://m.media-amazon.com/images/I/81J8tCL5efL._AC_SL1500_.jpg"; // fallback image
+
+    // Parse Amazon info if available
+    if (amazonIndex !== -1 && lines.length > amazonIndex + 1) {
+      const amazonLine = lines[amazonIndex + 1];
+      const urlMatch = amazonLine.match(/\((https?:\/\/[^\s)]+)\)/);
+      amazonURL = urlMatch ? urlMatch[1] : "";
+
+      const titleMatch = amazonLine.match(/\[(.+?)\]/);
+      amazonText = titleMatch ? titleMatch[1] : "";
+
+      const priceMatch = amazonLine.match(/- ([\d\.,]+\s*\$)/);
+      amazonPrice = priceMatch ? priceMatch[1] : "";
+    }
+
+    return (
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 w-full">
+        <div className="flex flex-col gap-4 flex-1">
+          {urgencyLine && (
+            <div>
+              <h4 className="text-pink-400 font-semibold text-sm mb-1">
+                🚨 Urgent Task
+              </h4>
+              <div className="flex items-start gap-2 bg-neutral-800 rounded-lg p-3">
+                <span className="inline-block w-2 h-2 bg-pink-500 rounded-full animate-pulse mt-1"></span>
+                <span className="text-base text-white">{urgencyLine}</span>
+              </div>
+
+              {/* Show suggested products button always if urgencyLine exists */}
+              <button
+                onClick={() => setShowAmazonModal(true)}
+                className="mt-3 text-sm text-purple-400 hover:text-pink-400 underline"
+                aria-label="Show suggested products on Amazon"
+              >
+                Show suggested products
+              </button>
+
+              {/* Amazon Popup Modal */}
+              {showAmazonModal && (
+                <div
+                  className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+                  onClick={() => setShowAmazonModal(false)}
+                >
+                  <div
+                    className="bg-neutral-900 rounded-xl p-6 max-w-sm w-full shadow-lg relative"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      onClick={() => setShowAmazonModal(false)}
+                      className="absolute top-3 right-3 text-neutral-400 hover:text-pink-400 text-xl font-bold"
+                      aria-label="Close modal"
+                    >
+                      ×
+                    </button>
+
+                    <h3 className="text-purple-300 font-semibold text-lg mb-3">
+                      🎯 Best Match on Amazon
+                    </h3>
+
+                    {/* Show product info or fallback message */}
+                    {amazonURL ? (
+                      <>
+                        <img
+                          src={amazonImageUrl}
+                          alt={amazonText || "Amazon product"}
+                          className="w-full h-48 object-contain rounded-md mb-3"
+                          loading="lazy"
+                        />
+                        <p className="text-green-400 text-sm font-mono mb-3">
+                          💰 {amazonPrice}
+                        </p>
+                        <a
+                          href={amazonURL}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-center text-purple-400 hover:text-pink-400 underline font-medium"
+                        >
+                          View on Amazon →
+                        </a>
+                      </>
+                    ) : (
+                      <p className="text-neutral-400 italic text-center">
+                        No suggested products available yet.
+                      </p>
                     )}
-                    {/* Ligne 3 : Maintenance Grade */}
-                    {aiRec.split("\n")[2] && (
-                      <div className="flex items-start gap-2">
-                        <span className="inline-block w-2 h-2 mt-1 bg-blue-400 rounded-full"></span>
-                        <span className="text-base italic text-neutral-400">
-                          {aiRec.split("\n")[2]}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <span className="text-base text-neutral-400">
-                    No recommendation available.
-                  </span>
-                )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {noHistoryLine && (
+            <div>
+              <h4 className="text-yellow-400 font-semibold text-sm mb-1">
+                📂 History
+              </h4>
+              <div className="flex items-start gap-2 bg-neutral-800 rounded-lg p-3">
+                <span className="inline-block w-2 h-2 mt-1 bg-yellow-400 rounded-full"></span>
+                <span className="text-base text-neutral-300">{noHistoryLine}</span>
               </div>
             </div>
+          )}
+
+          {gradeLine && (
+            <div>
+              <h4 className="text-blue-400 font-semibold text-sm mb-1">
+                🛠️ Maintenance Grade
+              </h4>
+              <div className="flex items-start gap-2 bg-neutral-800 rounded-lg p-3">
+                <span className="inline-block w-2 h-2 mt-1 bg-blue-400 rounded-full"></span>
+                <span className="text-base italic text-neutral-400">{gradeLine}</span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="w-full lg:w-[280px] shrink-0"></div>
+      </div>
+    );
+  })() : (
+    <span className="text-base text-neutral-400">No recommendation available.</span>
+  )}
+</div>
+
+
+
+
+
+
             <div className="mt-4">
               <h3 className="mb-2 text-2xl font-semibold text-white">Ask AI</h3>
               <input
@@ -2497,10 +2729,407 @@ const handleSaveOwnership = async () => {
                 </div>
               </div>,
               // Card 2 : Camembert chart
+              <div 
+              key = "camembert"
+              className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
+                <h4 className="mb-2 font-semibold text-white">Expenses Overview</h4>
+
+                <div className="flex justify-center gap-6">
+                  {(() => {
+                    const expenseCategories = [
+                      "Repair",
+                      "Scheduled Maintenance",
+                      "Cosmetic Mods",
+                      "Performance Mods",
+                      "Paperwork & Taxes",
+                    ];
+                    const data = expenseCategories.map((category) => ({
+                      name: category,
+                      value: receipts
+                        .filter((r) => r.category === category)
+                        .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
+                    }));
+                    const COLORS = [
+                      "#7c3aed", // violet-600
+                      "#9333ea", // violet-700
+                      "#a78bfa", // violet-300
+                      "#c4b5fd", // violet-200
+                      "#ede9fe", // violet-50
+                    ];
+                    return (
+                      <PieChart width={400} height={220}>
+                        <Pie
+                          data={data}
+                          cx={120}
+                          cy={110}
+                          outerRadius={80}
+                          labelLine={false}
+                          dataKey="value"
+                          nameKey="name"
+                        >
+                          {data.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                        <Legend layout="vertical" align="right" verticalAlign="middle" />
+                      </PieChart>
+                    );
+                  })()}
+                </div>
+
+                <div className="mt-4 text-center text-sm">
+                  <p>
+                    <span className="font-medium">Purchase Price:</span>{" "}
+                    ${Number(vehicle.boughtAt || 0).toFixed(2)}
+                  </p>
+                  <p>
+                    <span className="font-medium">Total Expenses:</span>{" "}
+                    ${receipts.reduce((sum, r) => sum + (Number(r.price) || 0), 0).toFixed(2)}
+                  </p>
+                  <p className="mt-1 font-semibold text-purple-400">
+                    Total Spent: $
+                    {(
+                      Number(vehicle.boughtAt || 0) +
+                      receipts.reduce((sum, r) => sum + (Number(r.price) || 0), 0)
+                    ).toFixed(2)}
+                  </p>
+                </div>
 
 
+              </div>,
 
-              // Card 2: Vehicle Financial Breakdown & Depreciation
+              // Card 3: Update Financial Details 
+              <div key="charges_setup" className="mt-10 w-full max-w-xl mx-auto text-white space-y-6">
+                <h4 className="text-lg font-semibold text-center">Update Financial Details</h4>
+                
+                {/* Insurance Info */}
+                <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
+                  <h5 className="mb-2 text-md font-semibold">🛡️ Insurance Info</h5>
+                  <button
+                    onClick={() => setShowInsurance(true)}
+                    className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+                  >
+                    Update Insurance
+                  </button>
+
+                  {showInsurance && (
+                    <div className="mt-4 space-y-2">
+                      <label className="block text-sm font-medium text-gray-300">Total Insurance Cost ($)</label>
+                      <input
+                        type="number"
+                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        value={insuranceCost}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setInsuranceCost(val);
+                          const est = insuranceLength > 0 ? (val / insuranceLength).toFixed(2) : "";
+                          if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
+                            setManualInsuranceMonthly(est);
+                          }
+                        }}
+                      />
+
+                      <label className="block text-sm font-medium text-gray-300">Length (months)</label>
+                      <input
+                        type="number"
+                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        value={insuranceLength}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setInsuranceLength(val);
+                          const est = val > 0 ? (insuranceCost / val).toFixed(2) : "";
+                          if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
+                            setManualInsuranceMonthly(est);
+                          }
+                        }}
+                      />
+
+                      <label className="block text-sm font-medium text-gray-300">Start Date</label>
+                      <input
+                        type="date"
+                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        value={insuranceStart}
+                        onChange={(e) => setInsuranceStart(e.target.value)}
+                      />
+
+                      <label className="block text-sm font-medium text-gray-300">Monthly Insurance Payment ($)</label>
+                      <input
+                        type="number"
+                        className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+                        value={manualInsuranceMonthly}
+                        onChange={(e) => setManualInsuranceMonthly(e.target.value)}
+                      />
+
+                      <p className="text-sm text-gray-400 italic">
+                        Monthly: {insuranceLength > 0 ? `$${(insuranceCost / insuranceLength).toFixed(2)}` : "—"}
+                      </p>
+
+                      <button
+                        onClick={handleSaveInsurance}
+                        className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+                      >
+                        Save Insurance Info
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Ownership Info */}
+                <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
+                  <h5 className="mb-2 text-md font-semibold">💰 Ownership Info</h5>
+                  <button
+                    onClick={() => setShowOwnership(true)}
+                    className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+                  >
+                    Update Ownership
+                  </button>
+
+                  {showOwnership && (
+                    <div className="mt-4 space-y-2">
+                      <label className="block text-sm font-medium text-gray-300">Ownership Type</label>
+                      <select
+                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        value={ownershipType}
+                        onChange={(e) => setOwnershipType(e.target.value)}
+                      >
+                        <option value="">Select Type</option>
+                        <option value="Owned">Owned</option>
+                        <option value="Financed">Financed</option>
+                      </select>
+
+                      {ownershipType === "Financed" && (
+                        <>
+                          <label className="block text-sm font-medium text-gray-300">Loan Amount ($)</label>
+                          <input
+                            type="number"
+                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            value={loanAmount}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setLoanAmount(val);
+                              const est =
+                                val && loanLength
+                                  ? ((val * (1 + (interestRate || 0) / 100)) / loanLength).toFixed(2)
+                                  : "";
+                              if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                                setManualMonthlyPayment(est);
+                              }
+                            }}
+                          />
+
+                          <label className="block text-sm font-medium text-gray-300">Length (months)</label>
+                          <input
+                            type="number"
+                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            value={loanLength}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setLoanLength(val);
+                              const est =
+                                loanAmount && val
+                                  ? ((loanAmount * (1 + (interestRate || 0) / 100)) / val).toFixed(2)
+                                  : "";
+                              if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                                setManualMonthlyPayment(est);
+                              }
+                            }}
+                          />
+
+                          <label className="block text-sm font-medium text-gray-300">Interest Rate (%)</label>
+                          <input
+                            type="number"
+                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            value={interestRate}
+                            onChange={(e) => {
+                              const val = Number(e.target.value);
+                              setInterestRate(val);
+                              const est =
+                                loanAmount && loanLength
+                                  ? ((loanAmount * (1 + (val || 0) / 100)) / loanLength).toFixed(2)
+                                  : "";
+                              if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
+                                setManualMonthlyPayment(est);
+                              }
+                            }}
+                          />
+
+                          <label className="block text-sm font-medium text-gray-300">Start Date</label>
+                          <input
+                            type="date"
+                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            value={loanStart}
+                            onChange={(e) => setLoanStart(e.target.value)}
+                          />
+
+                          <label className="block text-sm font-medium text-gray-300">Monthly Payment ($)</label>
+                          <input
+                            type="number"
+                            className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+                            value={manualMonthlyPayment}
+                            onChange={(e) => setManualMonthlyPayment(e.target.value)}
+                          />
+
+                          <p className="text-sm text-gray-400 italic">
+                            Est. Monthly: {loanAmount && loanLength ? `$${estimatedLoanMonthly}` : "—"}
+                          </p>
+                        </>
+                      )}
+
+                      <button
+                        onClick={handleSaveOwnership}
+                        className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+                      >
+                        Save Ownership Info
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>,
+
+              // Card 4: Monthly Budget Overview
+              <div key="monthly_box" className="flex flex-col items-center justify-center mt-8">
+                <h4 className="mb-2 text-lg font-semibold text-white">Monthly Budget Overview</h4>
+                {(() => {
+                  let months = 1;
+                  if (vehicle.createdAt) {
+                    const created = vehicle.createdAt.seconds
+                      ? new Date(vehicle.createdAt.seconds * 1000)
+                      : new Date(vehicle.createdAt);
+                    const now = new Date();
+                    months =
+                      (now.getFullYear() - created.getFullYear()) * 12 +
+                      (now.getMonth() - created.getMonth()) +
+                      1;
+                    if (months < 1) months = 1;
+                  }
+
+                  const expenseCategories = [
+                    "Repair",
+                    "Scheduled Maintenance",
+                    "Cosmetic Mods",
+                    "Performance Mods",
+                    "Paperwork & Taxes",
+                  ];
+
+                  const monthlyData = expenseCategories.map((category) => {
+                    const total = receipts
+                      .filter((r) => r.category === category)
+                      .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+                    return {
+                      name: category,
+                      value: total / months,
+                    };
+                  });
+
+                  const ownershipInfo = vehicle.ownershipInfo || {};
+                  const insuranceInfo = vehicle.insuranceInfo || {};
+
+                  const credit = ownershipInfo.manualMonthlyPayment ?? null;
+                  const insurance = insuranceInfo.manualInsuranceMonthly ?? null;
+                  const gas = vehicle.gas ?? null;
+
+                  const totalMonthly =
+                    monthlyData.reduce((sum, item) => sum + item.value, 0) +
+                    (typeof credit === "number" ? credit : 0) +
+                    (typeof insurance === "number" ? insurance : 0) +
+                    (typeof gas === "number" ? gas : 0);
+
+                  return (
+                    <>
+                      <div className="flex flex-wrap gap-4 justify-center items-stretch w-full max-w-2xl">
+                        {monthlyData.map((item) => (
+                          <div
+                            key={item.name}
+                            className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]"
+                          >
+                            <span className="text-sm text-gray-400">{item.name}</span>
+                            <span className="text-xl font-bold text-green-400">
+                              ${item.value.toFixed(2)}
+                            </span>
+                            <span className="text-xs text-gray-500">/month</span>
+                          </div>
+                        ))}
+
+                        {/* Credit */}
+                        <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                          <span className="text-sm text-gray-400">Credit</span>
+                          <span className="text-xl font-bold text-blue-400">
+                            {typeof credit === "number" ? `$${credit.toFixed(2)}` : "—"}
+                          </span>
+                          <span className="text-xs text-gray-500">/month</span>
+                        </div>
+
+                        {/* Insurance */}
+                        <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                          <span className="text-sm text-gray-400">Insurance</span>
+                          <span className="text-xl font-bold text-purple-400">
+                            {typeof insurance === "number" ? `$${insurance.toFixed(2)}` : "—"}
+                          </span>
+                          <span className="text-xs text-gray-500">/month</span>
+                        </div>
+
+                        {/* Gas */}
+                        <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
+                          <span className="text-sm text-gray-400">Gas</span>
+                          <span className="text-xl font-bold text-yellow-400">
+                            {typeof gas === "number" ? `$${gas.toFixed(2)}` : (
+                              <span className="italic text-gray-500">(coming soon)</span>
+                            )}
+                          </span>
+                          <span className="text-xs text-gray-500">/month</span>
+                        </div>
+                      </div>
+
+                      {/* Total Monthly Budget */}
+                      <div className="mt-4 text-lg text-white font-semibold">
+                        In average, you spend{" "}
+                        <span className="text-green-400">${totalMonthly.toFixed(2)} </span>
+                        on this vehicle
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>,
+
+              // Card 8 : Sankey for budget
+              <div
+                key="sankey-graph"
+                className="rounded-xl bg-neutral-800 p-4 shadow-md border border-purple-500 w-full md:w-[400px]"
+              >
+                <h3 className="text-lg font-semibold text-purple-300 mb-3">Expense Breakdown</h3>
+                <div className="mb-3">
+                  <ul className="flex flex-wrap gap-2 text-sm">
+                    {sankeyData.nodes.map((node, idx) => (
+                      <li key={idx} className="flex items-center space-x-2">
+                        <span
+                          className="inline-block w-3 h-3 rounded-sm border border-neutral-700"
+                          style={{ backgroundColor: node.color }}
+                        />
+                        <span className="text-white">
+                          {node.name} (${getNodeValue(idx)})
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <Sankey
+                      data={sankeyData}
+                      nodePadding={1}
+                      nodeWidth={60}
+                      node={renderCustomNode}
+                      link={renderCustomLink}
+                      linkCurvature={1}
+                    >
+                      <Tooltip />
+                    </Sankey>
+                  </ResponsiveContainer>
+                </div>
+              </div>,
+
+              // Card 6: Vehicle Financial Breakdown & Depreciation
               <div
                 key="finance-2"
                 className="flex flex-col gap-4 p-6 rounded-lg shadow-lg bg-neutral-800"
@@ -2685,100 +3314,7 @@ const handleSaveOwnership = async () => {
                 </div>
               </div>,
 
-              // Card 4: Advanced Ownership Analytics (Table Version)
-              <div
-                key="finance-4"
-                className="flex flex-col gap-4 p-6 rounded-lg shadow-lg bg-neutral-800"
-              >
-                <h3 className="flex items-center gap-2 mb-4 text-xl font-semibold text-white">
-                  Advanced Ownership Analytics
-                  <InfoTooltip text="Track your AI value and total invested over time.">
-                    <HelpCircle className="w-4 h-4 mb-10 mr-16 text-neutral-400 hover:text-neutral-200" />
-                  </InfoTooltip>
-                </h3>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm text-white">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="px-4 py-2 text-left">Date</th>
-                        <th className="px-4 py-2 text-left text-green-400">
-                          AI Value
-                        </th>
-                        <th className="px-4 py-2 text-left text-blue-400">
-                          Total Invested
-                        </th>
-                        {/* <th className="px-4 py-2 text-left text-purple-400">Bought At</th> */}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rawAiData.map((pt, idx) => {
-                        const dateStr = new Date(pt.x).toLocaleDateString(
-                          undefined,
-                          { month: "short", day: "numeric", year: "2-digit" }
-                        );
-                        const receiptsUpTo = receipts.filter(
-                          (r) =>
-                            r.date &&
-                            (r.date.seconds
-                              ? r.date.seconds * 1000
-                              : new Date(r.date).getTime()) <= pt.x
-                        );
-                        const receiptsTotal = receiptsUpTo.reduce(
-                          (sum, r) => sum + (Number(r.price) || 0),
-                          0
-                        );
-                        const invested =
-                          (Number(vehicle?.boughtAt) || 0) + receiptsTotal;
-                        // let boughtAt = "";
-                        // if (vehicle?.boughtAt && vehicle?.createdAt?.seconds) {
-                        //   const boughtAtTime = vehicle.createdAt.seconds * 1000;
-                        //   if (Math.abs(pt.x - boughtAtTime) < 86400000) {
-                        //     boughtAt = `$${Number(vehicle.boughtAt).toLocaleString()}`;
-                        //   }
-                        // }
-                        return (
-                          <tr key={idx} className="border-b border-neutral-800">
-                            <td className="px-4 py-2">{dateStr}</td>
-                            <td className="px-4 py-2 font-mono text-green-300">
-                              ${pt.y.toLocaleString()}
-                            </td>
-                            <td className="px-4 py-2 font-mono text-blue-300">
-                              ${invested.toLocaleString()}
-                            </td>
-                            {/* <td className="px-4 py-2 font-mono text-purple-300">{boughtAt}</td> */}
-                          </tr>
-                        );
-                      })}
-                      {/* If no row matched the purchase date, add a row for Bought At at the top */}
-                      {/* 
-                      {(() => {
-                        if (
-                          vehicle?.boughtAt &&
-                          vehicle?.createdAt?.seconds &&
-                          !rawAiData.some(
-                            pt =>
-                              Math.abs(pt.x - vehicle.createdAt.seconds * 1000) < 86400000
-                          )
-                        ) {
-                          const dateStr = new Date(vehicle.createdAt.seconds * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "2-digit" });
-                          return (
-                            <tr className="border-b border-neutral-800">
-                              <td className="px-4 py-2">{dateStr}</td>
-                              <td className="px-4 py-2 font-mono text-green-300"></td>
-                              <td className="px-4 py-2 font-mono text-blue-300">${Number(vehicle.boughtAt).toLocaleString()}</td>
-                              <td className="px-4 py-2 font-mono text-purple-300">${Number(vehicle.boughtAt).toLocaleString()}</td>
-                            </tr>
-                          );
-                        }
-                        return null;
-                      })()}
-                      */}
-                    </tbody>
-                  </table>
-                </div>
-              </div>,
-
-              // Card 5: Advanced Ownership Analytics
+              // Card 7: Advanced Ownership Analytics
               <div
                 key="finance-3"
                 className="flex flex-col gap-4 p-6 rounded-lg shadow-lg bg-neutral-800"
@@ -2972,298 +3508,98 @@ const handleSaveOwnership = async () => {
                 </div>
               </div>,
 
-      // Card 6: Monthly Budget Overview
-      <div key="monthly_box" className="flex flex-col items-center justify-center mt-8">
-        <h4 className="mb-2 text-lg font-semibold text-white">Monthly Budget Overview</h4>
-        {(() => {
-          let months = 1;
-          if (vehicle.createdAt) {
-            const created = vehicle.createdAt.seconds
-              ? new Date(vehicle.createdAt.seconds * 1000)
-              : new Date(vehicle.createdAt);
-            const now = new Date();
-            months =
-              (now.getFullYear() - created.getFullYear()) * 12 +
-              (now.getMonth() - created.getMonth()) +
-              1;
-            if (months < 1) months = 1;
-          }
-
-          const expenseCategories = [
-            "Repair",
-            "Scheduled Maintenance",
-            "Cosmetic Mods",
-            "Performance Mods",
-            "Paperwork & Taxes",
-          ];
-
-          const monthlyData = expenseCategories.map((category) => {
-            const total = receipts
-              .filter((r) => r.category === category)
-              .reduce((sum, r) => sum + (Number(r.price) || 0), 0);
-            return {
-              name: category,
-              value: total / months,
-            };
-          });
-
-          const ownershipInfo = vehicle.ownershipInfo || {};
-          const insuranceInfo = vehicle.insuranceInfo || {};
-
-          const credit = ownershipInfo.manualMonthlyPayment ?? null;
-          const insurance = insuranceInfo.manualInsuranceMonthly ?? null;
-          const gas = vehicle.gas ?? null;
-
-          const totalMonthly =
-            monthlyData.reduce((sum, item) => sum + item.value, 0) +
-            (typeof credit === "number" ? credit : 0) +
-            (typeof insurance === "number" ? insurance : 0) +
-            (typeof gas === "number" ? gas : 0);
-
-          return (
-            <>
-              <div className="flex flex-wrap gap-4 justify-center items-stretch w-full max-w-2xl">
-                {monthlyData.map((item) => (
-                  <div
-                    key={item.name}
-                    className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]"
-                  >
-                    <span className="text-sm text-gray-400">{item.name}</span>
-                    <span className="text-xl font-bold text-green-400">
-                      ${item.value.toFixed(2)}
-                    </span>
-                    <span className="text-xs text-gray-500">/month</span>
-                  </div>
-                ))}
-
-                {/* Credit */}
-                <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
-                  <span className="text-sm text-gray-400">Credit</span>
-                  <span className="text-xl font-bold text-blue-400">
-                    {typeof credit === "number" ? `$${credit.toFixed(2)}` : "—"}
-                  </span>
-                  <span className="text-xs text-gray-500">/month</span>
-                </div>
-
-                {/* Insurance */}
-                <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
-                  <span className="text-sm text-gray-400">Insurance</span>
-                  <span className="text-xl font-bold text-purple-400">
-                    {typeof insurance === "number" ? `$${insurance.toFixed(2)}` : "—"}
-                  </span>
-                  <span className="text-xs text-gray-500">/month</span>
-                </div>
-
-                {/* Gas */}
-                <div className="flex flex-col items-center bg-neutral-900 border border-neutral-700 rounded-lg px-4 py-3 min-w-[120px]">
-                  <span className="text-sm text-gray-400">Gas</span>
-                  <span className="text-xl font-bold text-yellow-400">
-                    {typeof gas === "number" ? `$${gas.toFixed(2)}` : (
-                      <span className="italic text-gray-500">(coming soon)</span>
-                    )}
-                  </span>
-                  <span className="text-xs text-gray-500">/month</span>
-                </div>
-              </div>
-
-              {/* Total Monthly Budget */}
-              <div className="mt-4 text-lg text-white font-semibold">
-                In average, you spend{" "}
-                <span className="text-green-400">${totalMonthly.toFixed(2)} </span>
-                on this vehicle
-              </div>
-            </>
-          );
-        })()}
-      </div>,
-
-      // Card 7: Update Financial Details
-      <div key="charges_setup" className="mt-10 w-full max-w-xl mx-auto text-white space-y-6">
-        <h4 className="text-lg font-semibold text-center">Update Financial Details</h4>
-        
-        {/* Insurance Info */}
-        <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
-          <h5 className="mb-2 text-md font-semibold">🛡️ Insurance Info</h5>
-          <button
-            onClick={() => setShowInsurance(true)}
-            className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
-          >
-            Update Insurance
-          </button>
-
-          {showInsurance && (
-            <div className="mt-4 space-y-2">
-              <label className="block text-sm font-medium text-gray-300">Total Insurance Cost ($)</label>
-              <input
-                type="number"
-                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                value={insuranceCost}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setInsuranceCost(val);
-                  const est = insuranceLength > 0 ? (val / insuranceLength).toFixed(2) : "";
-                  if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
-                    setManualInsuranceMonthly(est);
-                  }
-                }}
-              />
-
-              <label className="block text-sm font-medium text-gray-300">Length (months)</label>
-              <input
-                type="number"
-                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                value={insuranceLength}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setInsuranceLength(val);
-                  const est = val > 0 ? (insuranceCost / val).toFixed(2) : "";
-                  if (!manualInsuranceMonthly || manualInsuranceMonthly === estimatedInsuranceMonthly) {
-                    setManualInsuranceMonthly(est);
-                  }
-                }}
-              />
-
-              <label className="block text-sm font-medium text-gray-300">Start Date</label>
-              <input
-                type="date"
-                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                value={insuranceStart}
-                onChange={(e) => setInsuranceStart(e.target.value)}
-              />
-
-              <label className="block text-sm font-medium text-gray-300">Monthly Insurance Payment ($)</label>
-              <input
-                type="number"
-                className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
-                value={manualInsuranceMonthly}
-                onChange={(e) => setManualInsuranceMonthly(e.target.value)}
-              />
-
-              <p className="text-sm text-gray-400 italic">
-                Monthly: {insuranceLength > 0 ? `$${(insuranceCost / insuranceLength).toFixed(2)}` : "—"}
-              </p>
-
-              <button
-                onClick={handleSaveInsurance}
-                className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+              // Card 5: Advanced Ownership Analytics (Table Version)
+              <div
+                key="finance-4"
+                className="flex flex-col gap-4 p-6 rounded-lg shadow-lg bg-neutral-800"
               >
-                Save Insurance Info
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Ownership Info */}
-        <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
-          <h5 className="mb-2 text-md font-semibold">💰 Ownership Info</h5>
-          <button
-            onClick={() => setShowOwnership(true)}
-            className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
-          >
-            Update Ownership
-          </button>
-
-          {showOwnership && (
-            <div className="mt-4 space-y-2">
-              <label className="block text-sm font-medium text-gray-300">Ownership Type</label>
-              <select
-                className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                value={ownershipType}
-                onChange={(e) => setOwnershipType(e.target.value)}
-              >
-                <option value="">Select Type</option>
-                <option value="Owned">Owned</option>
-                <option value="Financed">Financed</option>
-              </select>
-
-              {ownershipType === "Financed" && (
-                <>
-                  <label className="block text-sm font-medium text-gray-300">Loan Amount ($)</label>
-                  <input
-                    type="number"
-                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                    value={loanAmount}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setLoanAmount(val);
-                      const est =
-                        val && loanLength
-                          ? ((val * (1 + (interestRate || 0) / 100)) / loanLength).toFixed(2)
-                          : "";
-                      if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
-                        setManualMonthlyPayment(est);
-                      }
-                    }}
-                  />
-
-                  <label className="block text-sm font-medium text-gray-300">Length (months)</label>
-                  <input
-                    type="number"
-                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                    value={loanLength}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setLoanLength(val);
-                      const est =
-                        loanAmount && val
-                          ? ((loanAmount * (1 + (interestRate || 0) / 100)) / val).toFixed(2)
-                          : "";
-                      if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
-                        setManualMonthlyPayment(est);
-                      }
-                    }}
-                  />
-
-                  <label className="block text-sm font-medium text-gray-300">Interest Rate (%)</label>
-                  <input
-                    type="number"
-                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                    value={interestRate}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      setInterestRate(val);
-                      const est =
-                        loanAmount && loanLength
-                          ? ((loanAmount * (1 + (val || 0) / 100)) / loanLength).toFixed(2)
-                          : "";
-                      if (!manualMonthlyPayment || manualMonthlyPayment === estimatedLoanMonthly) {
-                        setManualMonthlyPayment(est);
-                      }
-                    }}
-                  />
-
-                  <label className="block text-sm font-medium text-gray-300">Start Date</label>
-                  <input
-                    type="date"
-                    className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
-                    value={loanStart}
-                    onChange={(e) => setLoanStart(e.target.value)}
-                  />
-
-                  <label className="block text-sm font-medium text-gray-300">Monthly Payment ($)</label>
-                  <input
-                    type="number"
-                    className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
-                    value={manualMonthlyPayment}
-                    onChange={(e) => setManualMonthlyPayment(e.target.value)}
-                  />
-
-                  <p className="text-sm text-gray-400 italic">
-                    Est. Monthly: {loanAmount && loanLength ? `$${estimatedLoanMonthly}` : "—"}
-                  </p>
-                </>
-              )}
-
-              <button
-                onClick={handleSaveOwnership}
-                className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
-              >
-                Save Ownership Info
-              </button>
-            </div>
-          )}
-        </div>
-      </div>,
+                <h3 className="flex items-center gap-2 mb-4 text-xl font-semibold text-white">
+                  Advanced Ownership Analytics
+                  <InfoTooltip text="Track your AI value and total invested over time.">
+                    <HelpCircle className="w-4 h-4 mb-10 mr-16 text-neutral-400 hover:text-neutral-200" />
+                  </InfoTooltip>
+                </h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm text-white">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="px-4 py-2 text-left">Date</th>
+                        <th className="px-4 py-2 text-left text-green-400">
+                          AI Value
+                        </th>
+                        <th className="px-4 py-2 text-left text-blue-400">
+                          Total Invested
+                        </th>
+                        {/* <th className="px-4 py-2 text-left text-purple-400">Bought At</th> */}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rawAiData.map((pt, idx) => {
+                        const dateStr = new Date(pt.x).toLocaleDateString(
+                          undefined,
+                          { month: "short", day: "numeric", year: "2-digit" }
+                        );
+                        const receiptsUpTo = receipts.filter(
+                          (r) =>
+                            r.date &&
+                            (r.date.seconds
+                              ? r.date.seconds * 1000
+                              : new Date(r.date).getTime()) <= pt.x
+                        );
+                        const receiptsTotal = receiptsUpTo.reduce(
+                          (sum, r) => sum + (Number(r.price) || 0),
+                          0
+                        );
+                        const invested =
+                          (Number(vehicle?.boughtAt) || 0) + receiptsTotal;
+                        // let boughtAt = "";
+                        // if (vehicle?.boughtAt && vehicle?.createdAt?.seconds) {
+                        //   const boughtAtTime = vehicle.createdAt.seconds * 1000;
+                        //   if (Math.abs(pt.x - boughtAtTime) < 86400000) {
+                        //     boughtAt = `$${Number(vehicle.boughtAt).toLocaleString()}`;
+                        //   }
+                        // }
+                        return (
+                          <tr key={idx} className="border-b border-neutral-800">
+                            <td className="px-4 py-2">{dateStr}</td>
+                            <td className="px-4 py-2 font-mono text-green-300">
+                              ${pt.y.toLocaleString()}
+                            </td>
+                            <td className="px-4 py-2 font-mono text-blue-300">
+                              ${invested.toLocaleString()}
+                            </td>
+                            {/* <td className="px-4 py-2 font-mono text-purple-300">{boughtAt}</td> */}
+                          </tr>
+                        );
+                      })}
+                      {/* If no row matched the purchase date, add a row for Bought At at the top */}
+                      {/* 
+                      {(() => {
+                        if (
+                          vehicle?.boughtAt &&
+                          vehicle?.createdAt?.seconds &&
+                          !rawAiData.some(
+                            pt =>
+                              Math.abs(pt.x - vehicle.createdAt.seconds * 1000) < 86400000
+                          )
+                        ) {
+                          const dateStr = new Date(vehicle.createdAt.seconds * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "2-digit" });
+                          return (
+                            <tr className="border-b border-neutral-800">
+                              <td className="px-4 py-2">{dateStr}</td>
+                              <td className="px-4 py-2 font-mono text-green-300"></td>
+                              <td className="px-4 py-2 font-mono text-blue-300">${Number(vehicle.boughtAt).toLocaleString()}</td>
+                              <td className="px-4 py-2 font-mono text-purple-300">${Number(vehicle.boughtAt).toLocaleString()}</td>
+                            </tr>
+                          );
+                        }
+                        return null;
+                      })()}
+                      */}
+                    </tbody>
+                  </table>
+                </div>
+              </div>,
     ]}
   />
 </section>
