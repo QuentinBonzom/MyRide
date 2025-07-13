@@ -116,20 +116,20 @@ const defaultOptions = {
 // Icônes et catégories
 
 const icons = {
-  Year: <Key className="w-4 h-4 mr-2" />,
-  Make: <Car className="w-4 h-4 mr-2" />,
-  Model: <Car className="w-4 h-4 mr-2" />,
-  City: <MapPin className="w-4 h-4 mr-2" />,
-  State: <MapPin className="w-4 h-4 mr-2" />,
-  VIN: <Key className="w-4 h-4 mr-2" />,
-  Mileage: <Gauge className="w-4 h-4 mr-2" />,
-  Color: <Palette className="w-4 h-4 mr-2" />,
-  Engine: <Fuel className="w-4 h-4 mr-2" />,
-  Transmission: <Fuel className="w-4 h-4 mr-2" />,
-  Description: <AlignLeft className="w-4 h-4 mr-2" />,
-  Owner: <Users className="w-4 h-4 mr-2" />,
-  Horsepower: <Zap className="w-4 h-4 mr-2" />,
-  "Fuel Type": <Droplets className="w-4 h-4 mr-2" />,
+  Year: <Key className="mr-2 w-4 h-4" />,
+  Make: <Car className="mr-2 w-4 h-4" />,
+  Model: <Car className="mr-2 w-4 h-4" />,
+  City: <MapPin className="mr-2 w-4 h-4" />,
+  State: <MapPin className="mr-2 w-4 h-4" />,
+  VIN: <Key className="mr-2 w-4 h-4" />,
+  Mileage: <Gauge className="mr-2 w-4 h-4" />,
+  Color: <Palette className="mr-2 w-4 h-4" />,
+  Engine: <Fuel className="mr-2 w-4 h-4" />,
+  Transmission: <Fuel className="mr-2 w-4 h-4" />,
+  Description: <AlignLeft className="mr-2 w-4 h-4" />,
+  Owner: <Users className="mr-2 w-4 h-4" />,
+  Horsepower: <Zap className="mr-2 w-4 h-4" />,
+  "Fuel Type": <Droplets className="mr-2 w-4 h-4" />,
 };
 
 // Modal de synchronisation du manuel
@@ -175,13 +175,13 @@ function OwnerManualModal({ vehicleId, onClose, onSync }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-      <div className="p-6 border rounded shadow-lg bg-neutral-800 border-neutral-700 w-80">
+    <div className="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-70">
+      <div className="p-6 w-80 rounded border shadow-lg bg-neutral-800 border-neutral-700">
         <h2 className="mb-4 text-xl text-white">Sync Owner Manual</h2>
         <input
           type="text"
           placeholder="Enter the URL of the PDF manual"
-          className="w-full p-2 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
+          className="p-2 mb-4 w-full text-white rounded border border-neutral-600 bg-neutral-700"
           value={manualUrl}
           onChange={(e) => setManualUrl(e.target.value)}
         />
@@ -205,7 +205,7 @@ function OwnerManualModal({ vehicleId, onClose, onSync }) {
         ) : (
           <button
             type="button"
-            className="w-full py-2 mb-2 text-white bg-purple-600 rounded hover:bg-purple-700"
+            className="py-2 mb-2 w-full text-white bg-purple-600 rounded hover:bg-purple-700"
             onClick={handleSync}
           >
             Save
@@ -213,7 +213,7 @@ function OwnerManualModal({ vehicleId, onClose, onSync }) {
         )}
         <button
           type="button"
-          className="w-full py-2 text-white rounded bg-neutral-600 hover:bg-neutral-500"
+          className="py-2 w-full text-white rounded bg-neutral-600 hover:bg-neutral-500"
           onClick={onClose}
         >
           Cancel
@@ -308,7 +308,7 @@ const renderCustomNode = ({ x, y, width, height, index }) => {
   );
 };
 
-const renderCustomLink = ({ sourceX, sourceY, targetX, targetY, value, index }) => {
+const renderCustomLink = ({ sourceX, sourceY, targetX, targetY, index }) => {
   const target = sankeyData.links[index]?.target;
   const totalToTarget = sankeyData.links
     .filter((link) => link.target === target)
@@ -495,25 +495,25 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-      <div className="w-full max-w-md p-8 border rounded-lg shadow-xl bg-neutral-800 border-neutral-700">
+    <div className="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-70">
+      <div className="p-8 w-full max-w-md rounded-lg border shadow-xl bg-neutral-800 border-neutral-700">
         <h2 className="mb-6 text-2xl font-semibold text-center text-white">
           {isEdit ? "Edit Receipt" : "Add Receipt"}
         </h2>
         <input
           placeholder="Title"
-          className="w-full p-3 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
+          className="p-3 mb-4 w-full text-white rounded border border-neutral-600 bg-neutral-700"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
         <input
           type="date"
-          className="w-full p-3 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
+          className="p-3 mb-4 w-full text-white rounded border border-neutral-600 bg-neutral-700"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
         <select
-          className="w-full p-3 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
+          className="p-3 mb-4 w-full text-white rounded border border-neutral-600 bg-neutral-700"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
@@ -526,14 +526,14 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
         </select>
         <input
           placeholder="Mileage"
-          className="w-full p-3 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
+          className="p-3 mb-4 w-full text-white rounded border border-neutral-600 bg-neutral-700"
           value={mileage}
           onChange={(e) => setMileage(e.target.value)}
         />
         <input
           type="number"
           placeholder="Price"
-          className="w-full p-3 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
+          className="p-3 mb-4 w-full text-white rounded border border-neutral-600 bg-neutral-700"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
         />
@@ -566,7 +566,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                         alt={`Receipt ${idx}`}
                         width={80}
                         height={80}
-                        className="object-contain bg-white border rounded"
+                        className="object-contain bg-white rounded border"
                       />
                     </button>
                     {/* Delete/Undo button: simple cross, no background */}
@@ -603,10 +603,10 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
           </div>
         )}
         {previewUrl && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
-            <div className="relative flex flex-col items-center w-full max-w-2xl p-4 bg-white rounded-lg shadow-xl">
+          <div className="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-80">
+            <div className="flex relative flex-col items-center p-4 w-full max-w-2xl bg-white rounded-lg shadow-xl">
               <button
-                className="absolute text-2xl text-gray-700 top-2 right-2 hover:text-pink-500"
+                className="absolute top-2 right-2 text-2xl text-gray-700 hover:text-pink-500"
                 onClick={() => setPreviewUrl(null)}
                 title="Close"
                 style={{ background: "none", border: "none" }}
@@ -614,7 +614,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
                 ×
               </button>
               {previewUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <div className="flex items-center justify-center w-full">
+                <div className="flex justify-center items-center w-full">
                   <Image
                     src={previewUrl}
                     alt="Full preview"
@@ -643,7 +643,7 @@ function ReceiptForm({ vehicleId, initialData, onClose, onSaved }) {
         <input
           type="file"
           multiple
-          className="w-full mb-4 text-white"
+          className="mb-4 w-full text-white"
           onChange={(e) => setFiles(Array.from(e.target.files))}
         />
         <div className="flex justify-between">
@@ -673,10 +673,10 @@ function ReceiptDetailModal({ receipt, onClose, aiAnswer }) {
   if (!receipt) return null;
   // On ne gère plus les liens produits, juste la recommandation texte
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80">
-      <div className="relative w-full max-w-lg p-6 border shadow-2xl bg-neutral-900 border-neutral-700 rounded-xl">
+    <div className="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-80">
+      <div className="relative p-6 w-full max-w-lg rounded-xl border shadow-2xl bg-neutral-900 border-neutral-700">
         <button
-          className="absolute text-2xl text-white top-2 right-2 hover:text-pink-400"
+          className="absolute top-2 right-2 text-2xl text-white hover:text-pink-400"
           onClick={onClose}
           title="Close"
           style={{ background: "none", border: "none" }}
@@ -722,7 +722,7 @@ function ReceiptDetailModal({ receipt, onClose, aiAnswer }) {
         </div>
         {/* AI summary + suggestion produit */}
         {aiAnswer && (
-          <div className="p-3 mt-4 overflow-y-auto text-sm border rounded bg-neutral-800 border-neutral-700 text-neutral-200 max-h-72">
+          <div className="overflow-y-auto p-3 mt-4 max-h-72 text-sm rounded border bg-neutral-800 border-neutral-700 text-neutral-200">
             <span className="block mb-1 font-semibold text-purple-400">
               AI Summary:
             </span>
@@ -738,7 +738,7 @@ function ReceiptDetailModal({ receipt, onClose, aiAnswer }) {
 function InfoTooltip({ text, children }) {
   const [open, setOpen] = useState(false);
   return (
-    <span className="relative inline-block">
+    <span className="inline-block relative">
       <span
         onClick={() => setOpen((v) => !v)}
         onBlur={() => setOpen(false)}
@@ -750,7 +750,7 @@ function InfoTooltip({ text, children }) {
       </span>
       {open && (
         <div
-          className="absolute z-50 px-2 py-2 text-xs text-white border rounded shadow-lg bg-neutral-900 border-neutral-700"
+          className="absolute z-50 px-2 py-2 text-xs text-white rounded border shadow-lg bg-neutral-900 border-neutral-700"
           style={{
             minWidth: 180,
             maxWidth: 220,
@@ -1351,8 +1351,8 @@ const handleSaveOwnership = async () => {
   if (!user) return null;
   if (loading || !vehicle) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-900">
-        <Loader2 className="w-12 h-12 mb-4 text-purple-500 animate-spin" />
+      <div className="flex flex-col justify-center items-center min-h-screen bg-zinc-900">
+        <Loader2 className="mb-4 w-12 h-12 text-purple-500 animate-spin" />
         <span className="text-lg text-white">Loading vehicle...</span>
       </div>
     );
@@ -1361,8 +1361,8 @@ const handleSaveOwnership = async () => {
   // Si en mode édition, afficher le formulaire refait
   if (editMode) {
     return (
-      <div className="flex items-center justify-center min-h-screen px-4 py-10 bg-gradient-to-b from-neutral-900 to-neutral-800">
-        <div className="w-full max-w-6xl p-8 rounded-lg shadow-2xl bg-neutral-800">
+      <div className="flex justify-center items-center px-4 py-10 min-h-screen bg-gradient-to-b from-neutral-900 to-neutral-800">
+        <div className="p-8 w-full max-w-6xl rounded-lg shadow-2xl bg-neutral-800">
           <h1 className="mb-8 text-4xl font-bold text-center md:mt-14">
             Edit Vehicle
           </h1>
@@ -1379,7 +1379,7 @@ const handleSaveOwnership = async () => {
                   name="year"
                   value={formData.year}
                   onChange={handleFormChange}
-                  className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                  className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                 />
               </div>
               <div>
@@ -1389,7 +1389,7 @@ const handleSaveOwnership = async () => {
                   name="make"
                   value={formData.make}
                   onChange={handleFormChange}
-                  className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                  className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                 />
               </div>
               <div>
@@ -1400,7 +1400,7 @@ const handleSaveOwnership = async () => {
                     name="model"
                     value={formData.model}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1412,7 +1412,7 @@ const handleSaveOwnership = async () => {
                     name="city"
                     value={formData.city}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1424,7 +1424,7 @@ const handleSaveOwnership = async () => {
                     name="state"
                     value={formData.state}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1436,7 +1436,7 @@ const handleSaveOwnership = async () => {
                     name="vin"
                     value={formData.vin}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1448,7 +1448,7 @@ const handleSaveOwnership = async () => {
                     name="mileage"
                     value={formData.mileage}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1460,7 +1460,7 @@ const handleSaveOwnership = async () => {
                     name="color"
                     value={formData.color}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1472,7 +1472,7 @@ const handleSaveOwnership = async () => {
                     name="withoutPurchasePrice"
                     value={formData.withoutPurchasePrice}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                     placeholder="Enter total without purchase price"
                   />
                 </label>
@@ -1488,7 +1488,7 @@ const handleSaveOwnership = async () => {
                     name="engine"
                     value={formData.engine}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1500,7 +1500,7 @@ const handleSaveOwnership = async () => {
                     name="transmission"
                     value={formData.transmission}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1512,7 +1512,7 @@ const handleSaveOwnership = async () => {
                     name="horsepower"
                     value={formData.horsepower}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1524,7 +1524,7 @@ const handleSaveOwnership = async () => {
                     name="fuelType"
                     value={formData.fuelType}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1536,7 +1536,7 @@ const handleSaveOwnership = async () => {
                     name="vehicleType"
                     value={formData.vehicleType}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1548,7 +1548,7 @@ const handleSaveOwnership = async () => {
                     name="boughtAt"
                     value={formData.boughtAt}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1560,7 +1560,7 @@ const handleSaveOwnership = async () => {
                     name="purchaseYear"
                     value={formData.purchaseYear}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1576,7 +1576,7 @@ const handleSaveOwnership = async () => {
                     name="repairCost"
                     value={formData.repairCost}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1588,7 +1588,7 @@ const handleSaveOwnership = async () => {
                     name="scheduledMaintenance"
                     value={formData.scheduledMaintenance}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1600,7 +1600,7 @@ const handleSaveOwnership = async () => {
                     name="cosmeticMods"
                     value={formData.cosmeticMods}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1612,7 +1612,7 @@ const handleSaveOwnership = async () => {
                     name="performanceMods"
                     value={formData.performanceMods}
                     onChange={handleFormChange}
-                    className="w-full p-2 border rounded-md border-neutral-600 bg-neutral-700"
+                    className="p-2 w-full rounded-md border border-neutral-600 bg-neutral-700"
                   />
                 </label>
               </div>
@@ -1625,7 +1625,7 @@ const handleSaveOwnership = async () => {
                   name="description"
                   value={formData.description || ""}
                   onChange={handleFormChange}
-                  className="w-full p-2 border rounded-md resize-y border-neutral-600 bg-neutral-700"
+                  className="p-2 w-full rounded-md border resize-y border-neutral-600 bg-neutral-700"
                   rows="4"
                   placeholder="Edit vehicle description..."
                 ></textarea>
@@ -1772,7 +1772,7 @@ const handleSaveOwnership = async () => {
           {cards.map((card, idx) => (
             <div
               key={idx}
-              className="min-w-full px-1 snap-center"
+              className="px-1 min-w-full snap-center"
               style={{ flex: "0 0 100%" }}
             >
               {card}
@@ -1808,8 +1808,8 @@ const handleSaveOwnership = async () => {
   if (!user) return null;
   if (loading || !vehicle) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-zinc-900">
-        <Loader2 className="w-12 h-12 mb-4 text-purple-500 animate-spin" />
+      <div className="flex flex-col justify-center items-center min-h-screen bg-zinc-900">
+        <Loader2 className="mb-4 w-12 h-12 text-purple-500 animate-spin" />
         <span className="text-lg text-white">Loading vehicle...</span>
       </div>
     );
@@ -1820,13 +1820,13 @@ const handleSaveOwnership = async () => {
       <ToastContainer />
       <div className="container px-4 py-10 mx-auto text-white md:pt-3 bg-zinc-900">
         {/* Header */}
-        <header className="flex items-center justify-center gap-2 pt-8 mb-8 text-center">
+        <header className="flex gap-2 justify-center items-center pt-8 mb-8 text-center">
           <h1 className="text-4xl font-bold">
             {vehicle.year} {vehicle.make} {vehicle.model}
           </h1>
           <button
             onClick={handleShare}
-            className="flex items-center justify-center w-10 h-10 ml-3 transition rounded-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+            className="flex justify-center items-center ml-3 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition hover:from-purple-600 hover:to-pink-600"
             title="Share this vehicle"
             type="button"
           >
@@ -1853,7 +1853,7 @@ const handleSaveOwnership = async () => {
             ))}
           </div>
 
-          <div className="flex items-center justify-between mb-2 md:hidden">
+          <div className="flex justify-between items-center mb-2 md:hidden">
             <h2 className="text-2xl font-bold">Vehicle Info</h2>
             <button
               onClick={() => setShowInfo((v) => !v)}
@@ -1872,10 +1872,9 @@ const handleSaveOwnership = async () => {
           {/* Vehicle Info & Actions Card */}
           <div
             className={`p-6 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700 ${
-              showInfo ? "" : "hidden"
-            } md:block`}
+              showInfo ? "":"hidden"} md:block`}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex justify-between items-center mb-4">
               <h2 className="text-3xl font-bold">Vehicle Info</h2>
               {user.uid === vehicle.uid && (
                 <button
@@ -1930,7 +1929,7 @@ const handleSaveOwnership = async () => {
                     {item.label === "Color" ? (
                       <>
                         <span
-                          className="inline-block w-3 h-3 mr-1 rounded-full"
+                          className="inline-block mr-1 w-3 h-3 rounded-full"
                           style={{
                             backgroundColor:
                               vehicle.color?.toLowerCase() || "#ccc",
@@ -1947,7 +1946,7 @@ const handleSaveOwnership = async () => {
             </div>
             <div className="mt-6">
               <h3 className="flex items-center mb-1 text-xl font-medium">
-                <Info className="w-4 h-4 mr-2" /> Vehicle Condition
+                <Info className="mr-2 w-4 h-4" /> Vehicle Condition
               </h3>
               <span className="inline-block px-3 py-1 text-base font-semibold text-green-800 bg-green-200 rounded-xl">
                 Excellent
@@ -1958,13 +1957,13 @@ const handleSaveOwnership = async () => {
         {/* Enlarged image modal showing full gallery */}
         {enlargedIdx !== null && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+            className="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-75"
             onClick={() => setEnlargedIdx(null)}
           >
             {/* Left arrow */}
             {images.length > 1 && (
               <button
-                className="absolute z-10 p-3 text-white bg-gray-800 shadow-lg left-4 rounded-xl hover:bg-gray-700"
+                className="absolute left-4 z-10 p-3 text-white bg-gray-800 rounded-xl shadow-lg hover:bg-gray-700"
                 style={{ top: "50%", transform: "translateY(-50%)" }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -1979,7 +1978,7 @@ const handleSaveOwnership = async () => {
             )}
             {/* Close button */}
             <button
-              className="absolute text-2xl text-white top-4 right-4 hover:text-gray-300"
+              className="absolute top-4 right-4 text-2xl text-white hover:text-gray-300"
               onClick={() => setEnlargedIdx(null)}
             >
               &times;
@@ -1997,7 +1996,7 @@ const handleSaveOwnership = async () => {
             {/* Right arrow */}
             {images.length > 1 && (
               <button
-                className="absolute z-10 p-3 text-white bg-gray-800 rounded-full shadow-lg right-4 hover:bg-gray-700"
+                className="absolute right-4 z-10 p-3 text-white bg-gray-800 rounded-full shadow-lg hover:bg-gray-700"
                 style={{ top: "50%", transform: "translateY(-50%)" }}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -2013,15 +2012,15 @@ const handleSaveOwnership = async () => {
           </div>
         )}
         {/* NEW: Description Card */}
-        <div className="max-w-4xl p-6 mx-auto mt-8 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700">
+        <div className="p-6 mx-auto mt-8 max-w-4xl rounded-lg border shadow-lg bg-neutral-800 border-neutral-700">
           <h2 className="mb-4 text-3xl font-bold">Description</h2>
           <p className="text-xl">
             {vehicle.description || "No description provided"}
           </p>
         </div>
         {/* Maintenance & Receipts Card */}
-        <div className="max-w-4xl p-6 mx-auto mt-8 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700">
-          <div className="flex items-center justify-between pb-2 mb-4 border-b">
+        <div className="p-6 mx-auto mt-8 max-w-4xl rounded-lg border shadow-lg bg-neutral-800 border-neutral-700">
+          <div className="flex justify-between items-center pb-2 mb-4 border-b">
             <h2 className="text-3xl font-bold text-white">
               Maintenance & Receipts
             </h2>
@@ -2038,9 +2037,9 @@ const handleSaveOwnership = async () => {
               </span>
             )}
           </div>
-          <div className="flex space-x-4 justify-items-center">
+          <div className="flex justify-items-center space-x-4">
             {/* Dropdown for selecting a value */}
-            <div className="flex flex-col gap-4 mx-auto justify-items-center">
+            <div className="flex flex-col gap-4 justify-items-center mx-auto">
               <select
                 className="p-2 text-lg text-white border rounded bg-neutral-700 border-neutral-600 min-w-[160px]"
                 value={selectedItem || ""}
@@ -2084,7 +2083,7 @@ const handleSaveOwnership = async () => {
             </div>
           </div>
           <div className="mt-4 text-base font-semibold text-white">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex justify-between items-center mb-2">
               <h3 className="text-2xl font-semibold text-white">
                 AI Recommendation
               </h3>
@@ -2127,7 +2126,7 @@ const handleSaveOwnership = async () => {
                     toast.error("Failed to refresh AI recommendation.");
                   }
                 }}
-                className="p-2 text-purple-500 transition rounded-full hover:text-pink-500"
+                className="p-2 text-purple-500 rounded-full transition hover:text-pink-500"
                 title="Refresh AI Recommendation"
               >
                 <svg
@@ -2146,7 +2145,7 @@ const handleSaveOwnership = async () => {
                 </svg>
               </button>
             </div>
-<div className="flex flex-col gap-6 p-5 bg-neutral-900 rounded-xl">
+<div className="flex flex-col gap-6 p-5 rounded-xl bg-neutral-900">
   {aiRec ? (() => {
     const lines = aiRec.split("\n").filter((l) => l.trim() !== "");
 
@@ -2185,22 +2184,22 @@ const handleSaveOwnership = async () => {
     }
 
     return (
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6 w-full">
-        <div className="flex flex-col gap-4 flex-1">
+      <div className="flex flex-col gap-6 w-full lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col flex-1 gap-4">
           {urgencyLine && (
             <div>
-              <h4 className="text-pink-400 font-semibold text-sm mb-1">
+              <h4 className="mb-1 text-sm font-semibold text-pink-400">
                 🚨 Urgent Task
               </h4>
-              <div className="flex items-start gap-2 bg-neutral-800 rounded-lg p-3">
-                <span className="inline-block w-2 h-2 bg-pink-500 rounded-full animate-pulse mt-1"></span>
+              <div className="flex gap-2 items-start p-3 rounded-lg bg-neutral-800">
+                <span className="inline-block mt-1 w-2 h-2 bg-pink-500 rounded-full animate-pulse"></span>
                 <span className="text-base text-white">{urgencyLine}</span>
               </div>
 
               {/* Show suggested products button always if urgencyLine exists */}
               <button
                 onClick={() => setShowAmazonModal(true)}
-                className="mt-3 text-sm text-purple-400 hover:text-pink-400 underline"
+                className="mt-3 text-sm text-purple-400 underline hover:text-pink-400"
                 aria-label="Show suggested products on Amazon"
               >
                 Show suggested products
@@ -2209,22 +2208,22 @@ const handleSaveOwnership = async () => {
               {/* Amazon Popup Modal */}
               {showAmazonModal && (
                 <div
-                  className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70"
+                  className="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-70"
                   onClick={() => setShowAmazonModal(false)}
                 >
                   <div
-                    className="bg-neutral-900 rounded-xl p-6 max-w-sm w-full shadow-lg relative"
+                    className="relative p-6 w-full max-w-sm rounded-xl shadow-lg bg-neutral-900"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       onClick={() => setShowAmazonModal(false)}
-                      className="absolute top-3 right-3 text-neutral-400 hover:text-pink-400 text-xl font-bold"
+                      className="absolute top-3 right-3 text-xl font-bold text-neutral-400 hover:text-pink-400"
                       aria-label="Close modal"
                     >
                       ×
                     </button>
 
-                    <h3 className="text-purple-300 font-semibold text-lg mb-3">
+                    <h3 className="mb-3 text-lg font-semibold text-purple-300">
                       🎯 Best Match on Amazon
                     </h3>
 
@@ -2234,23 +2233,23 @@ const handleSaveOwnership = async () => {
                         <img
                           src={amazonImageUrl}
                           alt={amazonText || "Amazon product"}
-                          className="w-full h-48 object-contain rounded-md mb-3"
+                          className="object-contain mb-3 w-full h-48 rounded-md"
                           loading="lazy"
                         />
-                        <p className="text-green-400 text-sm font-mono mb-3">
+                        <p className="mb-3 font-mono text-sm text-green-400">
                           💰 {amazonPrice}
                         </p>
                         <a
                           href={amazonURL}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block text-center text-purple-400 hover:text-pink-400 underline font-medium"
+                          className="block font-medium text-center text-purple-400 underline hover:text-pink-400"
                         >
                           View on Amazon →
                         </a>
                       </>
                     ) : (
-                      <p className="text-neutral-400 italic text-center">
+                      <p className="italic text-center text-neutral-400">
                         No suggested products available yet.
                       </p>
                     )}
@@ -2262,11 +2261,11 @@ const handleSaveOwnership = async () => {
 
           {noHistoryLine && (
             <div>
-              <h4 className="text-yellow-400 font-semibold text-sm mb-1">
+              <h4 className="mb-1 text-sm font-semibold text-yellow-400">
                 📂 History
               </h4>
-              <div className="flex items-start gap-2 bg-neutral-800 rounded-lg p-3">
-                <span className="inline-block w-2 h-2 mt-1 bg-yellow-400 rounded-full"></span>
+              <div className="flex gap-2 items-start p-3 rounded-lg bg-neutral-800">
+                <span className="inline-block mt-1 w-2 h-2 bg-yellow-400 rounded-full"></span>
                 <span className="text-base text-neutral-300">{noHistoryLine}</span>
               </div>
             </div>
@@ -2274,11 +2273,11 @@ const handleSaveOwnership = async () => {
 
           {gradeLine && (
             <div>
-              <h4 className="text-blue-400 font-semibold text-sm mb-1">
+              <h4 className="mb-1 text-sm font-semibold text-blue-400">
                 🛠️ Maintenance Grade
               </h4>
-              <div className="flex items-start gap-2 bg-neutral-800 rounded-lg p-3">
-                <span className="inline-block w-2 h-2 mt-1 bg-blue-400 rounded-full"></span>
+              <div className="flex gap-2 items-start p-3 rounded-lg bg-neutral-800">
+                <span className="inline-block mt-1 w-2 h-2 bg-blue-400 rounded-full"></span>
                 <span className="text-base italic text-neutral-400">{gradeLine}</span>
               </div>
             </div>
@@ -2303,14 +2302,14 @@ const handleSaveOwnership = async () => {
               <input
                 type="text"
                 placeholder="Ask a question about your vehicle..."
-                className="w-full p-3 mb-4 text-lg text-white border rounded border-neutral-600 bg-neutral-700"
+                className="p-3 mb-4 w-full text-lg text-white rounded border border-neutral-600 bg-neutral-700"
                 value={aiQuestion}
                 onChange={(e) => setAiQuestion(e.target.value)}
               />
               <button
                 onClick={askAi}
                 disabled={loadingAiQuestion}
-                className="w-full mb-4 text-lg button-main"
+                className="mb-4 w-full text-lg button-main"
               >
                 {loadingAiQuestion ? "Loading..." : "Ask AI"}
               </button>
@@ -2343,17 +2342,17 @@ const handleSaveOwnership = async () => {
                   receipts.map((r) => (
                     <div
                       key={r.id}
-                      className="flex flex-col px-4 py-3 transition border shadow rounded-xl bg-neutral-900 border-neutral-700 hover:shadow-lg"
+                      className="flex flex-col px-4 py-3 rounded-xl border shadow transition bg-neutral-900 border-neutral-700 hover:shadow-lg"
                     >
                       {/* Title on top */}
-                      <div className="w-full mb-1">
+                      <div className="mb-1 w-full">
                         <span className="block text-base font-semibold text-white truncate">
                           {r.title}
                         </span>
                       </div>
                       {/* Bottom row: Date, Category, Price, Actions */}
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col items-start min-w-0 gap-2">
+                      <div className="flex justify-between items-center w-full">
+                        <div className="flex flex-col gap-2 items-start min-w-0">
                           <span className="font-mono text-xs leading-tight text-neutral-400">
                             {r.date
                               ? new Date(
@@ -2382,8 +2381,8 @@ const handleSaveOwnership = async () => {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-base font-semibold text-green-400 tabular-nums">
+                        <div className="flex gap-4 items-center">
+                          <span className="text-base font-semibold tabular-nums text-green-400">
                             ${Number(r.price).toFixed(2)}
                           </span>
                           {vehicle.uid === user.uid ? (
@@ -2442,12 +2441,12 @@ const handleSaveOwnership = async () => {
           </div>
           {/* Paperwork Card */}
 
-          <div className="max-w-4xl p-6 mx-auto mt-8 border rounded-lg shadow-lg bg-neutral-800 border-neutral-700">
+          <div className="p-6 mx-auto mt-8 max-w-4xl rounded-lg border shadow-lg bg-neutral-800 border-neutral-700">
             <h2 className="pb-2 mb-4 text-2xl font-bold text-white border-b">
               Paperwork
             </h2>
             {/* Grid for Title, Registration and Inspection */}
-            <div className="flex gap-2 p-2 overflow-x-auto no-scrollbar md:justify-items-center">
+            <div className="flex overflow-x-auto gap-2 p-2 no-scrollbar md:justify-items-center">
               {["title", "registration", "inspection"].map((type) => {
                 const docObj = allDocs.find((d) =>
                   d.name.toLowerCase().includes(type)
@@ -2487,12 +2486,12 @@ const handleSaveOwnership = async () => {
                 return (
                   <div
                     key={type}
-                    className={`flex-shrink-0 flex flex-col items-center p-4 rounded-lg ${bgColor}`}
+                    className={`flex flex-col flex-shrink-0 items-center p-4 rounded-lg ${bgColor}`}
                     style={{ minWidth: 140, maxWidth: 180 }}
                   >
                     {vehicle.uid === user.uid ? (
                       <>
-                        <div className="flex items-center justify-center w-10 h-16 mb-2">
+                        <div className="flex justify-center items-center mb-2 w-10 h-16">
                           <Image
                             src={iconSrcs[type]}
                             alt={labels[type]}
@@ -2596,7 +2595,7 @@ const handleSaveOwnership = async () => {
                     ) : (
                       <>
                         <div
-                          className={`w-16 h-16 flex items-center justify-center mb-2`}
+                          className={`flex justify-center items-center mb-2 w-16 h-16`}
                         >
                           <Image
                             src={iconSrcs[type]}
@@ -2641,12 +2640,12 @@ const handleSaveOwnership = async () => {
                 className="p-6 rounded-lg shadow-lg bg-neutral-800"
               >
                 {/* En-tête KPI */}
-                <div className="flex flex-col items-start justify-between md:flex-row">
+                <div className="flex flex-col justify-between items-start md:flex-row">
                   <div>
                     <h3 className="flex items-center text-xl font-semibold text-white">
                       ESTIMATED AI VALUE
                       <InfoTooltip text="This is the current value of your vehicle as estimated by our AI model, based on market data and your vehicle's details.">
-                        <HelpCircle className="w-4 h-4 ml-2 text-neutral-400 hover:text-neutral-200" />
+                        <HelpCircle className="ml-2 w-4 h-4 text-neutral-400 hover:text-neutral-200" />
                       </InfoTooltip>
                     </h3>
                     <p className="text-3xl font-bold text-green-400">
@@ -2657,7 +2656,7 @@ const handleSaveOwnership = async () => {
                     <h4 className="flex items-center text-sm text-neutral-400">
                       AI VARIATION
                       <InfoTooltip text="Shows the percentage change in AI value over the selected period.">
-                        <HelpCircle className="w-4 h-4 ml-2 text-neutral-400 hover:text-neutral-200" />
+                        <HelpCircle className="ml-2 w-4 h-4 text-neutral-400 hover:text-neutral-200" />
                       </InfoTooltip>
                     </h4>
                     {aiVariationPct !== null && (
@@ -2675,7 +2674,7 @@ const handleSaveOwnership = async () => {
                 </div>
                 {/* Graphique + sélecteur */}
                 <div className="mb-6">
-                  <div className="flex items-center justify-end mb-2">
+                  <div className="flex justify-end items-center mb-2">
                     <select
                       className="p-2 text-white rounded bg-neutral-900"
                       value={timeWindow}
@@ -2686,7 +2685,7 @@ const handleSaveOwnership = async () => {
                       <option value="Last Year">1 year</option>
                     </select>
                   </div>
-                  <div className="w-auto rounded-lg h-80">
+                  <div className="w-auto h-80 rounded-lg">
                     <Chart
                       options={defaultOptions}
                       series={buildSeries({
@@ -2703,28 +2702,28 @@ const handleSaveOwnership = async () => {
                   </div>
                 </div>
                 {/* Actions */}
-                <div className="flex flex-col items-center justify-between mb-24 space-y-3 md:flex-row md:space-y-0 md:space-x-4">
+                <div className="flex flex-col justify-between items-center mb-24 space-y-3 md:flex-row md:space-y-0 md:space-x-4">
                   {user.uid === vehicle.uid &&
                     (isListed ? (
                       <button
                         onClick={removeFromMarketplace}
-                        className="w-full px-6 py-2 text-red-400 bg-transparent border border-red-400 rounded md:w-auto hover:bg-red-500/10"
+                        className="px-6 py-2 w-full text-red-400 bg-transparent rounded border border-red-400 md:w-auto hover:bg-red-500/10"
                       >
                         Remove from Marketplace
                       </button>
                     ) : (
                       <button
                         onClick={() => setShowMarketplaceModal(true)}
-                        className="w-full px-6 py-2 text-white rounded md:w-auto bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                        className="px-6 py-2 w-full text-white bg-gradient-to-r from-purple-500 to-pink-500 rounded md:w-auto hover:from-purple-600 hover:to-pink-600"
                       >
                         Add to Marketplace
                       </button>
                     ))}
                   <button
                     onClick={handleShare}
-                    className="flex items-center justify-center w-full px-6 py-2 rounded md:w-auto bg-neutral-700 hover:bg-neutral-600"
+                    className="flex justify-center items-center px-6 py-2 w-full rounded md:w-auto bg-neutral-700 hover:bg-neutral-600"
                   >
-                    <Share2 className="w-5 h-5 mr-2 text-white" /> Share
+                    <Share2 className="mr-2 w-5 h-5 text-white" /> Share
                   </button>
                 </div>
               </div>,
@@ -2734,7 +2733,7 @@ const handleSaveOwnership = async () => {
               className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
                 <h4 className="mb-2 font-semibold text-white">Expenses Overview</h4>
 
-                <div className="flex justify-center gap-6">
+                <div className="flex gap-6 justify-center">
                   {(() => {
                     const expenseCategories = [
                       "Repair",
@@ -2778,7 +2777,7 @@ const handleSaveOwnership = async () => {
                   })()}
                 </div>
 
-                <div className="mt-4 text-center text-sm">
+                <div className="mt-4 text-sm text-center">
                   <p>
                     <span className="font-medium">Purchase Price:</span>{" "}
                     ${Number(vehicle.boughtAt || 0).toFixed(2)}
@@ -2800,15 +2799,15 @@ const handleSaveOwnership = async () => {
               </div>,
 
               // Card 3: Update Financial Details 
-              <div key="charges_setup" className="mt-10 w-full max-w-xl mx-auto text-white space-y-6">
+              <div key="charges_setup" className="mx-auto mt-10 space-y-6 w-full max-w-xl text-white">
                 <h4 className="text-lg font-semibold text-center">Update Financial Details</h4>
                 
                 {/* Insurance Info */}
-                <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
-                  <h5 className="mb-2 text-md font-semibold">🛡️ Insurance Info</h5>
+                <div className="p-4 rounded-lg border bg-neutral-900 border-neutral-700">
+                  <h5 className="mb-2 font-semibold text-md">🛡️ Insurance Info</h5>
                   <button
                     onClick={() => setShowInsurance(true)}
-                    className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+                    className="px-4 py-2 bg-purple-600 rounded transition hover:bg-purple-700"
                   >
                     Update Insurance
                   </button>
@@ -2818,7 +2817,7 @@ const handleSaveOwnership = async () => {
                       <label className="block text-sm font-medium text-gray-300">Total Insurance Cost ($)</label>
                       <input
                         type="number"
-                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                         value={insuranceCost}
                         onChange={(e) => {
                           const val = Number(e.target.value);
@@ -2833,7 +2832,7 @@ const handleSaveOwnership = async () => {
                       <label className="block text-sm font-medium text-gray-300">Length (months)</label>
                       <input
                         type="number"
-                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                         value={insuranceLength}
                         onChange={(e) => {
                           const val = Number(e.target.value);
@@ -2848,7 +2847,7 @@ const handleSaveOwnership = async () => {
                       <label className="block text-sm font-medium text-gray-300">Start Date</label>
                       <input
                         type="date"
-                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                         value={insuranceStart}
                         onChange={(e) => setInsuranceStart(e.target.value)}
                       />
@@ -2856,18 +2855,18 @@ const handleSaveOwnership = async () => {
                       <label className="block text-sm font-medium text-gray-300">Monthly Insurance Payment ($)</label>
                       <input
                         type="number"
-                        className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+                        className="p-2 w-full text-white rounded border border-purple-600 bg-neutral-800"
                         value={manualInsuranceMonthly}
                         onChange={(e) => setManualInsuranceMonthly(e.target.value)}
                       />
 
-                      <p className="text-sm text-gray-400 italic">
+                      <p className="text-sm italic text-gray-400">
                         Monthly: {insuranceLength > 0 ? `$${(insuranceCost / insuranceLength).toFixed(2)}` : "—"}
                       </p>
 
                       <button
                         onClick={handleSaveInsurance}
-                        className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+                        className="px-4 py-2 mt-4 bg-green-600 rounded hover:bg-green-700"
                       >
                         Save Insurance Info
                       </button>
@@ -2876,11 +2875,11 @@ const handleSaveOwnership = async () => {
                 </div>
 
                 {/* Ownership Info */}
-                <div className="bg-neutral-900 p-4 rounded-lg border border-neutral-700">
-                  <h5 className="mb-2 text-md font-semibold">💰 Ownership Info</h5>
+                <div className="p-4 rounded-lg border bg-neutral-900 border-neutral-700">
+                  <h5 className="mb-2 font-semibold text-md">💰 Ownership Info</h5>
                   <button
                     onClick={() => setShowOwnership(true)}
-                    className="px-4 py-2 bg-purple-600 rounded hover:bg-purple-700 transition"
+                    className="px-4 py-2 bg-purple-600 rounded transition hover:bg-purple-700"
                   >
                     Update Ownership
                   </button>
@@ -2889,7 +2888,7 @@ const handleSaveOwnership = async () => {
                     <div className="mt-4 space-y-2">
                       <label className="block text-sm font-medium text-gray-300">Ownership Type</label>
                       <select
-                        className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                        className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                         value={ownershipType}
                         onChange={(e) => setOwnershipType(e.target.value)}
                       >
@@ -2903,7 +2902,7 @@ const handleSaveOwnership = async () => {
                           <label className="block text-sm font-medium text-gray-300">Loan Amount ($)</label>
                           <input
                             type="number"
-                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                             value={loanAmount}
                             onChange={(e) => {
                               const val = Number(e.target.value);
@@ -2921,7 +2920,7 @@ const handleSaveOwnership = async () => {
                           <label className="block text-sm font-medium text-gray-300">Length (months)</label>
                           <input
                             type="number"
-                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                             value={loanLength}
                             onChange={(e) => {
                               const val = Number(e.target.value);
@@ -2939,7 +2938,7 @@ const handleSaveOwnership = async () => {
                           <label className="block text-sm font-medium text-gray-300">Interest Rate (%)</label>
                           <input
                             type="number"
-                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                             value={interestRate}
                             onChange={(e) => {
                               const val = Number(e.target.value);
@@ -2957,7 +2956,7 @@ const handleSaveOwnership = async () => {
                           <label className="block text-sm font-medium text-gray-300">Start Date</label>
                           <input
                             type="date"
-                            className="w-full p-2 rounded bg-neutral-800 text-white border border-neutral-600"
+                            className="p-2 w-full text-white rounded border bg-neutral-800 border-neutral-600"
                             value={loanStart}
                             onChange={(e) => setLoanStart(e.target.value)}
                           />
@@ -2965,12 +2964,12 @@ const handleSaveOwnership = async () => {
                           <label className="block text-sm font-medium text-gray-300">Monthly Payment ($)</label>
                           <input
                             type="number"
-                            className="w-full p-2 rounded bg-neutral-800 text-white border border-purple-600"
+                            className="p-2 w-full text-white rounded border border-purple-600 bg-neutral-800"
                             value={manualMonthlyPayment}
                             onChange={(e) => setManualMonthlyPayment(e.target.value)}
                           />
 
-                          <p className="text-sm text-gray-400 italic">
+                          <p className="text-sm italic text-gray-400">
                             Est. Monthly: {loanAmount && loanLength ? `$${estimatedLoanMonthly}` : "—"}
                           </p>
                         </>
@@ -2978,7 +2977,7 @@ const handleSaveOwnership = async () => {
 
                       <button
                         onClick={handleSaveOwnership}
-                        className="mt-4 px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+                        className="px-4 py-2 mt-4 bg-green-600 rounded hover:bg-green-700"
                       >
                         Save Ownership Info
                       </button>
@@ -2988,7 +2987,7 @@ const handleSaveOwnership = async () => {
               </div>,
 
               // Card 4: Monthly Budget Overview
-              <div key="monthly_box" className="flex flex-col items-center justify-center mt-8">
+              <div key="monthly_box" className="flex flex-col justify-center items-center mt-8">
                 <h4 className="mb-2 text-lg font-semibold text-white">Monthly Budget Overview</h4>
                 {(() => {
                   let months = 1;
@@ -3082,7 +3081,7 @@ const handleSaveOwnership = async () => {
                       </div>
 
                       {/* Total Monthly Budget */}
-                      <div className="mt-4 text-lg text-white font-semibold">
+                      <div className="mt-4 text-lg font-semibold text-white">
                         In average, you spend{" "}
                         <span className="text-green-400">${totalMonthly.toFixed(2)} </span>
                         on this vehicle
@@ -3097,7 +3096,7 @@ const handleSaveOwnership = async () => {
                 key="sankey-graph"
                 className="rounded-xl bg-neutral-800 p-4 shadow-md border border-purple-500 w-full md:w-[400px]"
               >
-                <h3 className="text-lg font-semibold text-purple-300 mb-3">Expense Breakdown</h3>
+                <h3 className="mb-3 text-lg font-semibold text-purple-300">Expense Breakdown</h3>
                 <div className="mb-3">
                   <ul className="flex flex-wrap gap-2 text-sm">
                     {sankeyData.nodes.map((node, idx) => (
@@ -3134,14 +3133,14 @@ const handleSaveOwnership = async () => {
                 key="finance-2"
                 className="flex flex-col gap-4 p-6 rounded-lg shadow-lg bg-neutral-800"
               >
-                <h3 className="flex items-center gap-2 mb-2 text-xl font-semibold text-white">
+                <h3 className="flex gap-2 items-center mb-2 text-xl font-semibold text-white">
                   Financial Breakdown & Depreciation
                   <InfoTooltip text="See how much you've spent and how your vehicle's value has changed over time.">
-                    <HelpCircle className="w-5 h-5 mr-16 mb-7 text-neutral-400 hover:text-neutral-200" />
+                    <HelpCircle className="mr-16 mb-7 w-5 h-5 text-neutral-400 hover:text-neutral-200" />
                   </InfoTooltip>
                 </h3>
                 <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Purchase Price
                     </span>
@@ -3154,7 +3153,7 @@ const handleSaveOwnership = async () => {
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Total Invested
                     </span>
@@ -3166,7 +3165,7 @@ const handleSaveOwnership = async () => {
                       )}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       AI Variation (per month)
                     </span>
@@ -3248,7 +3247,7 @@ const handleSaveOwnership = async () => {
                     </span>
                   </div>
                   {/* 5. Time Since Last Receipt */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Time Since Last Receipt
                     </span>
@@ -3319,7 +3318,7 @@ const handleSaveOwnership = async () => {
                 key="finance-3"
                 className="flex flex-col gap-4 p-6 rounded-lg shadow-lg bg-neutral-800"
               >
-                <h3 className="flex items-center gap-2 mb-2 text-xl font-semibold text-white">
+                <h3 className="flex gap-2 items-center mb-2 text-xl font-semibold text-white">
                   Ownership KPIs
                   <InfoTooltip text="Deep insights into your vehicle's cost and value evolution">
                     <HelpCircle className="w-4 h-4 text-neutral-400 hover:text-neutral-200" />
@@ -3327,7 +3326,7 @@ const handleSaveOwnership = async () => {
                 </h3>
                 <div className="flex flex-col gap-2">
                   {/* 1. Cost per Month of Ownership */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Cost per Month of Ownership
                     </span>
@@ -3363,7 +3362,7 @@ const handleSaveOwnership = async () => {
                     </span>
                   </div>
                   {/* 2. Realized vs Unrealized Loss */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Realized Loss (Spent - AI Value)
                     </span>
@@ -3392,11 +3391,11 @@ const handleSaveOwnership = async () => {
                     </span>
                   </div>
                   {/* 3. Average Receipt Value */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Average Receipt Value
                     </span>
-                    <span className="font-bold text-md text-emerald-400">
+                    <span className="font-bold text-emerald-400 text-md">
                       {receipts.length > 0 ? (
                         `$${(
                           getMetricValue("Total Spent") / receipts.length
@@ -3409,7 +3408,7 @@ const handleSaveOwnership = async () => {
                     </span>
                   </div>
                   {/* 4. Most Expensive Category */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Most Expensive Category
                     </span>
@@ -3442,7 +3441,7 @@ const handleSaveOwnership = async () => {
                     </span>
                   </div>
                   {/* 5. Time Since Last Receipt */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex justify-between items-center">
                     <span className="text-base text-neutral-400">
                       Time Since Last Receipt
                     </span>
@@ -3513,10 +3512,10 @@ const handleSaveOwnership = async () => {
                 key="finance-4"
                 className="flex flex-col gap-4 p-6 rounded-lg shadow-lg bg-neutral-800"
               >
-                <h3 className="flex items-center gap-2 mb-4 text-xl font-semibold text-white">
+                <h3 className="flex gap-2 items-center mb-4 text-xl font-semibold text-white">
                   Advanced Ownership Analytics
                   <InfoTooltip text="Track your AI value and total invested over time.">
-                    <HelpCircle className="w-4 h-4 mb-10 mr-16 text-neutral-400 hover:text-neutral-200" />
+                    <HelpCircle className="mr-16 mb-10 w-4 h-4 text-neutral-400 hover:text-neutral-200" />
                   </InfoTooltip>
                 </h3>
                 <div className="overflow-x-auto">
@@ -3627,8 +3626,8 @@ const handleSaveOwnership = async () => {
         )}
         {/* Marketplace Modal */}
         {showMarketplaceModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-            <div className="w-full max-w-sm p-6 text-white border rounded shadow-xl bg-neutral-800 border-neutral-700 ">
+          <div className="flex fixed inset-0 z-50 justify-center items-center bg-black bg-opacity-70">
+            <div className="p-6 w-full max-w-sm text-white rounded border shadow-xl bg-neutral-800 border-neutral-700">
               <h2 className="mb-4 text-xl font-bold text-center">
                 Add to Marketplace
               </h2>
@@ -3639,7 +3638,7 @@ const handleSaveOwnership = async () => {
                   step="0.01"
                   value={salePrice || ""}
                   onChange={(e) => setSalePrice(e.target.value)}
-                  className="w-full p-2 mb-4 text-white border rounded border-neutral-600 bg-neutral-700"
+                  className="p-2 mb-4 w-full text-white rounded border border-neutral-600 bg-neutral-700"
                 />
               </label>
               <div className="flex justify-end space-x-4">
