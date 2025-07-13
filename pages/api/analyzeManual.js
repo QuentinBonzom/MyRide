@@ -1,7 +1,8 @@
 import axios from "axios";
 import { ref, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc } from "firebase/firestore";
-import { storage, db } from "../../lib/firebase"; // Ensure Firestore is imported
+import { storage, db } from "../../lib/firebase";
+import { searchAmazonProducts } from "../../lib/amazon"; // 💡 Add this
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -25,13 +26,6 @@ export default async function handler(req, res) {
     const response = await axios.get(downloadURL);
     const maintenanceTable = response.data;
 
-    // Debugging: Log the maintenance table
-    console.log(
-      "Fetched maintenanceTable:",
-      JSON.stringify(maintenanceTable, null, 2)
-    );
-
-    // Validate maintenanceTable structure
     if (!maintenanceTable || !Array.isArray(maintenanceTable.table)) {
       return res
         .status(400)
@@ -41,16 +35,13 @@ export default async function handler(req, res) {
     console.log("Sending data to OpenAI for recommendation...");
 
     const prompt = `You are an API to analyze a maintenance table and provide recommendations based on it. The owner provided the following table:
-    ${JSON.stringify(maintenanceTable, null, 2)}
-    The current mileage of the vehicle is ${currentMileage} miles.
+${JSON.stringify(maintenanceTable, null, 2)}
+The current mileage of the vehicle is ${currentMileage} miles.
 
-    Your output are these pieces of information (don't display anything else, it's a snapshot for the owner):
-    1. Go through all rows, and get the category (first column value) with the smallest value in NextTimeToDo that is still above ${currentMileage} (row that minimizes  NextTimeToDo - ${currentMileage} being > 0. Display a message as such : "Most urgent to come: [Category] at [value in 'NextTimeToDo'] miles". Obviously, the recommendation has to be for a mileage > ${currentMileage}.
-    2. Add a warning for all maintenance missing history: list of all categories with blank value in column 'NextTimeToDo' (so-called blank_categories). Like this: "No history found for: [list of blank_categories]. We recommend checking them.
-    3. Maintenance Grade: To come`;
-
-    // Debugging: Log the constructed prompt
-    console.log("Constructed Prompt:", prompt);
+Your output are these pieces of information (don't display anything else, it's a snapshot for the owner):
+🔜 Go through all rows, and get the category (first column value) with the smallest value in NextTimeToDo that is still above ${currentMileage} (row that minimizes  NextTimeToDo - ${currentMileage} being > 0. Display a message as such : "Most urgent to come: [Category] at [value in 'NextTimeToDo'] miles". Obviously, the recommendation has to be for a mileage > ${currentMileage}.
+⚠️ Add a warning for all maintenance missing history: list of all categories with blank value in column 'NextTimeToDo' (so-called blank_categories). Like this: "No history found for: [list of blank_categories]. We recommend checking them.
+📈 Maintenance Grade: To come`;
 
     const aiResponse = await axios.post(
       "https://api.openai.com/v1/chat/completions",
@@ -72,23 +63,35 @@ export default async function handler(req, res) {
       }
     );
 
-    const recommendation = aiResponse.data.choices[0].message.content.trim();
-    console.log("AI Recommendation:", recommendation);
+    let recommendation = aiResponse.data.choices[0].message.content.trim();
+    console.log("GPT Recommendation:\n", recommendation);
 
-    // Update the aiRecommendation field in Firestore
-    console.log("Updating Firestore with AI recommendation...");
+    // 🧠 Extract the part/tool name from GPT output
+    const match = recommendation.match(/Recommended part\/tool:\s*(.+)/i);
+    const partName = match ? match[1].trim() : null;
+
+    // 🔍 Search Amazon if a part/tool was identified
+    if (partName) {
+      console.log(`Searching Amazon for: ${partName}`);
+      const product = await searchAmazonProducts(partName);
+
+      if (product) {
+        const productBlock = `\n\n🔧 Best Match on Amazon:\n[${product.title}](${product.url}) - ${product.price}`;
+        recommendation += productBlock;
+        console.log("Added Amazon link:", product.url);
+      } else {
+        recommendation += `\n\n🔍 No product found on Amazon for "${partName}".`;
+      }
+    }
+
+    // Save recommendation to Firestore
     const vehicleRef = doc(db, "listing", vehicleId);
     await updateDoc(vehicleRef, { aiRecommendation: recommendation });
-    console.log("Firestore updated successfully.");
 
-    // Return the recommendation
     res.status(200).json({ recommendation });
   } catch (error) {
     console.error("Error during recommendation generation:", error.message);
-
-    // Debugging: Log the error stack trace
     console.error("Stack trace:", error.stack);
-
     res
       .status(500)
       .json({ error: `Failed to generate recommendation: ${error.message}` });
