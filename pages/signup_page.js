@@ -11,9 +11,12 @@ import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import Cropper from "react-easy-crop";
 import anonymousPng from "../public/anonymous.png";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 export default function SignUp() {
   // ──────── States ────────
+  const { t, i18n } = useTranslation();
+  const [language, setLanguage] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [middleName, setMiddleName] = useState("");
@@ -38,6 +41,12 @@ export default function SignUp() {
   const [emailCheckMsg, setEmailCheckMsg] = useState("");
 
   const router = useRouter();
+
+  const handleLanguageSelect = (lang) => {
+    setLanguage(lang);
+    i18n.changeLanguage(lang); // now works because it's from useTranslation
+  };
+
 
   // ──────── Cropping ────────
   const handleImageChange = (e) => {
@@ -121,13 +130,16 @@ export default function SignUp() {
   const validateStep = async () => {
     const newErrors = {};
     if (step === 1) {
+      if (!language) newErrors.language = "Please select your language";
+    }
+    if (step === 2) {
       if (!firstName) newErrors.firstName = "Required field";
       if (!lastName) newErrors.lastName = "Required field";
     }
-    if (step === 2) {
+    if (step === 3) {
       if (!signupReason) newErrors.signupReason = "Please select a reason";
     }
-    if (step === 3) {
+    if (step === 4) {
       if (!email) newErrors.email = "Required field";
       else if (!validateEmail(email)) newErrors.email = "Invalid format";
       if (!password) newErrors.password = "Required field";
@@ -209,6 +221,7 @@ export default function SignUp() {
         lastName,
         middleName,
         email,
+        language,
         inviter: "frenchy",
         rating: 5,
         vehicles: [],
@@ -343,8 +356,9 @@ export default function SignUp() {
           </div>
 
           <h2 className="mt-6 mb-6 text-2xl font-semibold text-center text-black">
-            Create an Account
+            {t("signup.title")}
           </h2>
+
 
           {formError && (
             <p className="mb-4 text-center text-red-500">{formError}</p>
@@ -377,8 +391,52 @@ export default function SignUp() {
           {/* Email sign up flow, Multi-step */}
           {authMethod === "email" && (
             <div className="grid grid-cols-1 gap-4">
-              {/* STEP 1: Name */}
               {step === 1 && (
+                <>
+                  <div>
+                    <h3 className="mb-4 text-lg font-semibold text-black text-center">
+                      Choose your language / Choisissez votre langue
+                    </h3>
+                    <div className="flex justify-center gap-6">
+                      <button
+                        onClick={() => handleLanguageSelect("en")}
+                        
+                        className={`px-6 py-3 rounded-lg border ${
+                          language === "en"
+                            ? "bg-purple-700 text-white border-purple-700"
+                            : "bg-white border-gray-300 text-black"
+                        }`}
+                      >
+                        🇺🇸 English
+                      </button>
+                      <button
+                        onClick={() => handleLanguageSelect("fr")}
+                        className={`px-6 py-3 rounded-lg border ${
+                          language === "fr"
+                            ? "bg-purple-700 text-white border-purple-700"
+                            : "bg-white border-gray-300 text-black"
+                        }`}
+                      >
+                        🇫🇷 Français
+                      </button>
+                    </div>
+                    {errors.language && (
+                      <p className="mt-2 text-sm text-red-500 text-center">
+                        {errors.language}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleNext}
+                    className="mt-8 w-full py-2 font-bold text-white transition rounded-lg bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800"
+                  >
+                    Continue
+                  </button>
+                </>
+              )}
+
+              {/* STEP 1: Name */}
+              {step === 2 && (
                 <>
                   <div>
                     <label className="block mb-1 text-black">
@@ -395,6 +453,15 @@ export default function SignUp() {
                     )}
                   </div>
                   <div>
+                    <label className="block mb-1 text-black">Middle Name</label>
+                    <input
+                      type="text"
+                      value={middleName}
+                      onChange={(e) => setMiddleName(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    />
+                  </div>
+                  <div>
                     <label className="block mb-1 text-black">Last Name *</label>
                     <input
                       type="text"
@@ -406,15 +473,6 @@ export default function SignUp() {
                       <p className="text-sm text-red-500">{errors.lastName}</p>
                     )}
                   </div>
-                  <div>
-                    <label className="block mb-1 text-black">Middle Name</label>
-                    <input
-                      type="text"
-                      value={middleName}
-                      onChange={(e) => setMiddleName(e.target.value)}
-                      className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                    />
-                  </div>
                   <button
                     onClick={handleNext}
                     className="w-full py-2 mt-4 font-bold text-white transition rounded-lg bg-gradient-to-r from-pink-500 to-purple-700 hover:from-pink-600 hover:to-purple-800"
@@ -425,7 +483,7 @@ export default function SignUp() {
               )}
 
               {/* STEP 2: Why did you download the app? */}
-              {step === 2 && (
+              {step === 3 && (
                 <>
                   <div className="mb-6">
                     <label
@@ -471,7 +529,7 @@ export default function SignUp() {
               )}
 
               {/* STEP 3: Email & Password */}
-              {step === 3 && (
+              {step === 4 && (
                 <>
                   <div>
                     <label className="block mb-1 text-black">Email *</label>
@@ -598,7 +656,7 @@ export default function SignUp() {
               )}
 
               {/* STEP 4: Profile Picture */}
-              {step === 4 && (
+              {step === 5 && (
                 <>
                   <div>
                     <label className="block mb-1 text-black">
