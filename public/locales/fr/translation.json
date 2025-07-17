@@ -72,5 +72,40 @@
   "lastName": "Nom de famille",
   "phoneNumber": "Numéro de téléphone",
   "change_picture": "Changer la photo de profil"
+},
+"garage": {
+  "title": "Garage de {{name}}",
+  "myGarage": "Mon Garage",
+  "login": "Connexion",
+  "signup": "Créer un compte",
+  "description": "Connectez-vous ou inscrivez-vous pour voir votre garage et les statistiques de vos véhicules.",
+  "welcome": "Bienvenue dans Mon Garage",
+  "estimatedValue": "Valeur estimée du garage",
+  "totalCost": "Coût total du garage",
+  "purchaseCost": "Coût d'achat du garage",
+  "repairCost": "Coût en réparations",
+  "scheduledCost": "Coût en entretien programmé",
+  "cosmeticCost": "Coût en modifications esthétiques",
+  "performanceCost": "Coût en modifications de performance",
+  "dropdownDisclaimer": "Cette estimation est fournie à titre informatif uniquement et ne constitue pas un document officiel ou juridiquement contraignant.",
+  "addVehicle": "Ajouter un véhicule",
+  "viewMore": "Voir plus",
+  "delete": "Supprimer",
+  "color": "Couleur",
+  "mileage": "Kilométrage",
+  "power": "Puissance",
+  "fuel": "Carburant",
+  "transmission": "Transmission",
+  "purchasePrice": "Prix d'achat",
+  "totalExpenses": "Dépenses totales",
+  "totalSpent": "Total dépensé",
+  "expensesTitle": "Aperçu des dépenses",
+  "categories": {
+    "repair": "Réparations",
+    "scheduled": "Entretien programmé",
+    "cosmetic": "Modifications esthétiques",
+    "performance": "Modifications de performance",
+    "paperwork": "Documents & Taxes"
+  }
 }
 }

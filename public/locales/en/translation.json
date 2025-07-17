@@ -72,6 +72,41 @@
   "lastName": "Last Name",
   "phoneNumber": "Phone Number",
   "change_picture": "Change Profile Picture"
+},
+  "garage": {
+    "title": "{{name}}'s Garage",
+    "myGarage": "My Garage",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "description": "Log in or sign up to view your garage and vehicle statistics.",
+    "welcome": "Welcome to My Garage",
+    "estimatedValue": "Garage's Estimated Value",
+    "totalCost": "Garage's total cost",
+    "purchaseCost": "Garage's purchase cost",
+    "repairCost": "Cost in Repair",
+    "scheduledCost": "Cost in Scheduled Maintenance",
+    "cosmeticCost": "Cost in Cosmetic Mods",
+    "performanceCost": "Cost in Performance Mods",
+    "dropdownDisclaimer": "This estimation is provided for informational purposes only and is not legally binding or official documentation.",
+    "addVehicle": "Add Vehicle",
+    "viewMore": "View more",
+    "delete": "Delete",
+    "color": "Color",
+    "mileage": "Mileage",
+    "power": "Power",
+    "fuel": "Fuel",
+    "transmission": "Transmission",
+    "purchasePrice": "Purchase Price",
+    "totalExpenses": "Total Expenses",
+    "totalSpent": "Total Spent",
+    "expensesTitle": "Expenses Overview",
+    "categories": {
+      "repair": "Repair",
+      "scheduled": "Scheduled Maintenance",
+      "cosmetic": "Cosmetic Mods",
+      "performance": "Performance Mods",
+      "paperwork": "Paperwork & Taxes"
+    }
+  }
 }
 
-}
