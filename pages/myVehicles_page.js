@@ -16,8 +16,10 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import { useTranslation } from "react-i18next";
 
 export default function MyGarage() {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
 
   // États
@@ -26,46 +28,87 @@ export default function MyGarage() {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [sumType, setSumType] = useState("Garage's Estimated Value"); // Default to "Garage's Estimated Value"
+  const [sumType, setSumType] = useState("estimatedValue");
+// Default to "Garage's Estimated Value"
   const [dropdownOpen, setDropdownOpen] = useState(false); // Track dropdown visibility
   const sumOptions = [
-    "Garage's Estimated Value",
-    "Garage's total cost",
-    "Garage's purchase cost",
-    "Cost in Repair",
-    "Cost in Scheduled Maintenance",
-    "Cost in Cosmetic Mods",
-    "Cost in Performance Mods",
+    "estimatedValue",
+    "totalCost",
+    "purchaseCost",
+    "repairCost",
+    "scheduledCost",
+    "cosmeticCost",
+    "performanceCost"
   ];
 
-  const calculateGarageSum = (type) => {
-    switch (type) {
-      case "Garage's Estimated Value":
-        return vehicles.reduce((sum, veh) => {
-          const priceHistory = veh.ai_estimated_value || [];
-          if (priceHistory.length > 0) {
-            const lastEntry = priceHistory[priceHistory.length - 1]; // Get the last string in the array
-            const [value] = lastEntry.split("-"); // Extract the value before the first "-"
-            return sum + (parseFloat(value) || 0); // Convert to number and sum
-          }
-          return sum;
-        }, 0);
-      case "Garage's total cost":
-        return vehicles.reduce((sum, veh) => sum + (Number(veh.boughtAt) || 0) + veh.receipts.reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
-      case "Garage's purchase cost":
-        return vehicles.reduce((sum, veh) => sum + (Number(veh.boughtAt) || 0), 0);
-      case "Cost in Repair":
-        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Repair').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
-      case "Cost in Scheduled Maintenance":
-        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Scheduled Maintenance').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
-      case "Cost in Cosmetic Mods":
-        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Cosmetic Mods').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
-      case "Cost in Performance Mods":
-        return vehicles.reduce((sum, veh) => sum + veh.receipts.filter(r => r.category === 'Performance Mods').reduce((rSum, r) => rSum + (Number(r.price) || 0), 0), 0);
-      default:
-        return 0;
-    }
-  };
+
+
+const calculateGarageSum = (key) => {
+  switch (key) {
+    case "estimatedValue":
+      return vehicles.reduce((sum, veh) => {
+        const priceHistory = veh.ai_estimated_value || [];
+        if (priceHistory.length > 0) {
+          const lastEntry = priceHistory[priceHistory.length - 1];
+          const [value] = lastEntry.split("-");
+          return sum + (parseFloat(value) || 0);
+        }
+        return sum;
+      }, 0);
+    case "totalCost":
+      return vehicles.reduce(
+        (sum, veh) =>
+          sum +
+          (Number(veh.boughtAt) || 0) +
+          veh.receipts.reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
+        0
+      );
+    case "purchaseCost":
+      return vehicles.reduce(
+        (sum, veh) => sum + (Number(veh.boughtAt) || 0),
+        0
+      );
+    case "repairCost":
+      return vehicles.reduce(
+        (sum, veh) =>
+          sum +
+          veh.receipts
+            .filter((r) => r.category === "Repair")
+            .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
+        0
+      );
+    case "scheduledCost":
+      return vehicles.reduce(
+        (sum, veh) =>
+          sum +
+          veh.receipts
+            .filter((r) => r.category === "Scheduled Maintenance")
+            .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
+        0
+      );
+    case "cosmeticCost":
+      return vehicles.reduce(
+        (sum, veh) =>
+          sum +
+          veh.receipts
+            .filter((r) => r.category === "Cosmetic Mods")
+            .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
+        0
+      );
+    case "performanceCost":
+      return vehicles.reduce(
+        (sum, veh) =>
+          sum +
+          veh.receipts
+            .filter((r) => r.category === "Performance Mods")
+            .reduce((rSum, r) => rSum + (Number(r.price) || 0), 0),
+        0
+      );
+    default:
+      return 0;
+  }
+};
+
 
   const handleSumTypeSelect = (type) => {
     setSumType(type);
@@ -201,23 +244,22 @@ export default function MyGarage() {
               >
                 <XMarkIcon className="w-6 h-6 text-gray-400 hover:text-white" />
               </button>
-              <h2 className="mb-4 text-2xl font-bold">Welcome!</h2>
+              <h2 className="mb-4 text-2xl font-bold">{t("garage.welcome")}</h2>
               <p className="mb-6 text-gray-300">
-                To unlock all features of your garage, please log in or create
-                an account.
+                {t("garage.description")}
               </p>
               <div className="flex justify-center gap-4">
                 <button
                   onClick={goToLogin}
                   className="px-4 py-2 font-medium bg-purple-600 rounded-lg hover:bg-purple-700"
                 >
-                  Log In
+                  {t("garage.login")}
                 </button>
                 <button
                   onClick={goToSignUp}
                   className="px-4 py-2 font-medium bg-green-600 rounded-lg hover:bg-green-700"
                 >
-                  Sign Up
+                  {t("garage.signup")}
                 </button>
               </div>
             </motion.div>
@@ -230,11 +272,12 @@ export default function MyGarage() {
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.6 }}
         >
-          {isAuthenticated ? `${firstName}'s Garage` : "My Garage"}
+          {isAuthenticated ? t("garage.title", { name: firstName }) : t("garage.myGarage")}
+
         </motion.h1>
         <div className="w-full max-w-md mx-auto mb-8 text-center">
           <div className="flex items-center justify-center space-x-2">
-            <p className="text-sm text-gray-500">{sumType}</p>
+            <p className="text-sm text-gray-500">{t(`garage.${sumType}`)}</p>
             <button
               onClick={() => setDropdownOpen((prev) => !prev)}
               className="p-1 hover:bg-gray-100 rounded-full transition"
@@ -254,7 +297,7 @@ export default function MyGarage() {
           </div>
           <div>
             <p className="text-xs text-gray-500 italic">
-              This estimation is provided for informational purposes only and is not legally binding or official documentation.
+              {t("garage.dropdownDisclaimer")}
             </p>
           </div>
           {dropdownOpen && (
@@ -267,9 +310,10 @@ export default function MyGarage() {
                     sumType === option ? "font-bold text-purple-700" : ""
                   }`}
                 >
-                  {option}
+                  {t(`garage.${option}`)}
                 </button>
               ))}
+
             </div>
           )}
           <div className="flex items-center justify-center mt-2">
@@ -316,79 +360,84 @@ export default function MyGarage() {
         </h3>
           <div className="grid grid-cols-2 text-sm text-gray-300 gap-x-4">
                           <p>
-                            <strong>Color:</strong> {veh.color}
+                            <strong>{t("garage.color")}:</strong> {veh.color}
                           </p>
                           <p>
-                            <strong>Mileage:</strong> {veh.mileage} miles
+                            <strong>{t("garage.mileage")}:</strong> {veh.mileage} miles
                           </p>
                           <p>
-                            <strong>Power:</strong> {veh.horsepower} HP
+                            <strong>{t("garage.power")}:</strong> {veh.horsepower} HP
                           </p>
                           <p>
-                            <strong>Fuel:</strong> {veh.fuelType}
+                            <strong>{t("garage.fuel")}:</strong> {veh.fuelType}
                           </p>
                           <p>
-                            <strong>Transmission:</strong> {veh.transmission}
+                            <strong>{t("garage.transmission")}:</strong> {veh.transmission}
                           </p>
                         </div>
                       <div className="pt-2 mt-4 text-sm text-gray-300 border-t border-gray-700">
-                        <h4 className="mb-2 font-semibold text-white">Expenses Overview</h4>
+                        <h4 className="mb-2 font-semibold text-white">{t("garage.expensesTitle")}</h4>
 
-                        <div className="flex justify-center gap-6">
-                          {(() => {
-                            const expenseCategories = [
-                              "Repair",
-                              "Scheduled Maintenance",
-                              "Cosmetic Mods",
-                              "Performance Mods",
-                              "Paperwork & Taxes",
-                            ];
-                            const data = expenseCategories.map((category) => ({
-                              name: category,
-                              value: veh.receipts
-                                .filter((r) => r.category === category)
-                                .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
-                            }));
-                            const COLORS = [
-                              "#7c3aed", // violet-600
-                              "#9333ea", // violet-700
-                              "#a78bfa", // violet-300
-                              "#c4b5fd", // violet-200
-                              "#ede9fe", // violet-50
-                            ];
-                            return (
-                              <PieChart width={400} height={220}>
-                                <Pie
-                                  data={data}
-                                  cx={120}
-                                  cy={110}
-                                  outerRadius={80}
-                                  labelLine={false}
-                                  dataKey="value"
-                                  nameKey="name"
-                                >
-                                  {data.map((_, index) => (
-                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                  ))}
-                                </Pie>
-                                <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
-                                <Legend layout="vertical" align="right" verticalAlign="middle" />
-                              </PieChart>
-                            );
-                          })()}
-                        </div>
+                      <div className="flex justify-center gap-6">
+                        {(() => {
+                          // Define a map between raw category keys (stored in Firebase) and their translation keys
+                          const categoryMap = {
+                            "Repair": t("garage.categories.repair"),
+                            "Scheduled Maintenance": t("garage.categories.scheduled"),
+                            "Cosmetic Mods": t("garage.categories.cosmetic"),
+                            "Performance Mods": t("garage.categories.performance"),
+                            "Paperwork & Taxes": t("garage.categories.paperwork"),
+                          };
+
+                          const data = Object.entries(categoryMap).map(([key, label]) => ({
+                            name: label, // translated name for display
+                            value: veh.receipts
+                              .filter((r) => r.category === key) // filter using raw category key
+                              .reduce((sum, r) => sum + (Number(r.price) || 0), 0),
+                          }));
+
+                          const COLORS = [
+                            "#7c3aed", // violet-600
+                            "#9333ea", // violet-700
+                            "#a78bfa", // violet-300
+                            "#c4b5fd", // violet-200
+                            "#ede9fe", // violet-50
+                          ];
+
+                          return (
+                            <PieChart width={400} height={220}>
+                              <Pie
+                                data={data}
+                                cx={120}
+                                cy={110}
+                                outerRadius={80}
+                                labelLine={false}
+                                dataKey="value"
+                                nameKey="name"
+                              >
+                                {data.map((_, index) => (
+                                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                ))}
+                              </Pie>
+                              <Tooltip formatter={(value) => `$${value.toFixed(2)}`} />
+                              <Legend layout="vertical" align="right" verticalAlign="middle" />
+                            </PieChart>
+                          );
+                        })()}
+                      </div>
+
 
                         <div className="mt-4 text-center text-sm">
                           <p>
-                            <span className="font-medium">Purchase Price:</span>{" "}
+                            <span className="font-medium">{t("garage.purchasePrice")}:</span>{" "}
                             ${Number(veh.boughtAt || 0).toFixed(2)}
                           </p>
                           <p>
-                            <span className="font-medium">Total Expenses:</span>{" "}
+                            <span className="font-medium">{t("garage.totalSpent")}:</span>{" "}
                             ${receiptsTotal.toFixed(2)}
                           </p>
                           <p className="mt-1 font-semibold text-purple-400">
-                            Total Spent: ${totalCost.toFixed(2)}
+                            {t("garage.totalSpent")} ${totalCost.toFixed(2)}
                           </p>
                         </div>
                       </div>
@@ -403,7 +452,7 @@ export default function MyGarage() {
                           }}
                           className="button-main px-10 py-2"
                         >
-                          View more
+                          {t("garage.viewMore")}
                         </button>
                         <button
                           onClick={(e) => {
@@ -412,7 +461,7 @@ export default function MyGarage() {
                           }}
                           className="px-10 py-2 font-medium border border-gray-300 text-gray-400 bg-transparent rounded-lg hover:border-red-400 hover:text-red-600 transition"
                         >
-                          Delete
+                          {t("garage.delete")}
                         </button>
                       </div>
                     </div>

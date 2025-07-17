@@ -1,4 +1,6 @@
-// next.config.js
+// next.config.cjs
+const { i18n } = require('./next-i18next.config');
+
 module.exports = {
   experimental: {
     appDir: false,
@@ -31,4 +33,5 @@ module.exports = {
     ],
     unoptimized: true,
   },
+  i18n,
 };

@@ -1,11 +1,12 @@
 // pages/_app.js
+import '../lib/i18n'; // <-- Initialize i18n once here
+
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { auth } from "../lib/firebase";
 import Layout from "../components/Layout";
 import Head from "next/head";
 
-// → Import de **tous** tes CSS globaux au même endroit
 import "../styles/globals.css";
 import "../styles/Navbar.css";
 
